@@ -1,0 +1,28 @@
+{
+  "generated": "2026-03-01T00:00:00Z",
+  "source": "REQUIREMENTS.md",
+  "milestone": "Portfolio Demo",
+  "total_count": 15,
+  "by_status": {
+    "active": 12,
+    "deferred": 3,
+    "out_of_scope": 0
+  },
+  "requirements": [
+    {"req_id": "INFRA-01", "description": "Multi-model routing engine with configurable fallback chains", "priority": "Core", "source": "Explicit", "phase": "Phase 2", "status": "active"},
+    {"req_id": "AUTH-01", "description": "Supabase Auth with RBAC (Admin/Developer/Viewer), RLS enforcement", "priority": "Core", "source": "Explicit", "phase": "Phase 1", "status": "active"},
+    {"req_id": "SEC-01", "description": "API key management with per-key usage tracking, SHA-256 hashing", "priority": "Supporting", "source": "Explicit", "phase": "Phase 1", "status": "active"},
+    {"req_id": "OBS-01", "description": "Per-request cost and latency tracking with model/prompt/endpoint breakdown", "priority": "Core", "source": "Explicit", "phase": "Phase 2", "status": "active"},
+    {"req_id": "OBS-02", "description": "Real-time dashboard with Recharts (cost trends, latency p50/p95/p99, error rates)", "priority": "Core", "source": "Explicit", "phase": "Phase 2", "status": "active"},
+    {"req_id": "PROMPT-01", "description": "Prompt version control with named versions, diff view, rollback", "priority": "Core", "source": "Explicit", "phase": "Phase 3", "status": "active"},
+    {"req_id": "PROMPT-02", "description": "A/B test framework with statistical significance and auto-stop at 95% confidence", "priority": "Core", "source": "Explicit", "phase": "Phase 4", "status": "active"},
+    {"req_id": "EVAL-01", "description": "Evaluation pipeline with judge LLM, scoring rubrics, human review queue", "priority": "Core", "source": "Explicit", "phase": "Phase 5", "status": "active"},
+    {"req_id": "EVAL-02", "description": "Batch evaluation against test datasets", "priority": "Supporting", "source": "Explicit", "phase": null, "status": "deferred"},
+    {"req_id": "REL-01", "description": "Token-bucket rate limiting with 4-stage graceful degradation", "priority": "Core", "source": "Explicit", "phase": "Phase 4", "status": "active"},
+    {"req_id": "ALERT-01", "description": "Webhook anomaly alerts with configurable rules and cooldown", "priority": "Supporting", "source": "Explicit", "phase": "Phase 5", "status": "active"},
+    {"req_id": "COMP-01", "description": "PII redaction with configurable retention policies", "priority": "Supporting", "source": "Explicit", "phase": null, "status": "deferred"},
+    {"req_id": "CONFIG-01", "description": "Model configuration UI for temperature, max tokens, system prompts", "priority": "Core", "source": "Explicit", "phase": "Phase 2", "status": "active"},
+    {"req_id": "DX-01", "description": "Request playground with streaming and live token counter", "priority": "Supporting", "source": "Explicit", "phase": "Phase 3", "status": "active"},
+    {"req_id": "REPORT-01", "description": "Export CSV/JSON for cost reports and evaluation results", "priority": "Supporting", "source": "Explicit", "phase": null, "status": "deferred"}
+  ]
+}

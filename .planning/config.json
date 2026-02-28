@@ -3,11 +3,11 @@
 
   "milestone": "Portfolio Demo",
   "project_type": "greenfield",
-  "mode": "guided",
-  "depth": "standard",
+  "mode": "autonomous",
+  "depth": "thorough",
   "effort_level": "",
   "agent_teams": false,
-  "model_profile": "quality",
+  "model_profile": "budget",
 
   "brownfield": {
     "enabled": false,
@@ -56,8 +56,23 @@
     "backup_before_modify": false
   },
 
+  "prototype_mode": true,
+  "prototype_config": {
+    "demo_complexity": "simple",
+    "pre_contract_phases": 2,
+    "post_contract_phases": 3,
+    "demo_scope": "Real-time LLM monitoring dashboard with multi-model routing and cost tracking",
+    "full_build_start": 3,
+    "demo_essential_reqs": ["INFRA-01", "OBS-01", "OBS-02", "CONFIG-01"],
+    "foundation_reqs": ["AUTH-01", "SEC-01"],
+    "full_build_reqs": ["PROMPT-01", "REL-01", "DX-01", "PROMPT-02", "EVAL-01", "ALERT-01", "EVAL-02", "COMP-01", "REPORT-01"]
+  },
+
+  "execution_confidence": 95,
+  "execution_model": "full-code",
+
   "sequential_workflow": {
-    "enabled": false,
+    "enabled": true,
     "prior_context_depth": 3,
     "accumulate_research": true
   },
