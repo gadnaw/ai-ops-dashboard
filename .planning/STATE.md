@@ -6,7 +6,7 @@
 
 ## Current Position
 
-**Status:** Roadmap created
+**Status:** Research complete — all phases researched
 **Phase:** Phase 1 — Foundation (not started)
 **Plan:** —
 **Task:** —
@@ -17,11 +17,11 @@
 
 | Phase | Name | Status | Plans | Notes |
 |-------|------|--------|-------|-------|
-| 1 | Foundation | Pending | 0/3 | Auth skeleton, CI/CD, dual connection strings |
-| 2 | Working Demo | Pending | 0/4 | Core value demo, seed data, real-time dashboard |
-| 3 | Prompt Management + Playground | Pending | 0/3 | Versioning, diff view, streaming playground |
-| 4 | Reliability + Differentiators | Pending | 0/3 | Rate limiting, degradation viz, A/B testing |
-| 5 | Evaluation + Alerts | Pending | 0/3 | Judge LLM pipeline, review queue, alerting |
+| 1 | Foundation | Researched (skip) | 0/3 | Auth skeleton, CI/CD, dual connection strings |
+| 2 | Working Demo | Researched | 0/4 | 1,360 lines — AI SDK 6, Recharts 3.x, mat views, Realtime |
+| 3 | Prompt Management + Playground | Researched | 0/3 | 1,085 lines — useCompletion, diff, CodeMirror 6, triggers |
+| 4 | Reliability + Differentiators | Researched | 0/3 | 1,881 lines — SPRT, token bucket, degradation, FNV-1a |
+| 5 | Evaluation + Alerts | Researched | 0/3 | 1,802 lines — LLM-as-judge, pg_cron alerts, MSW, webhooks |
 
 ### Current Phase Detail
 
@@ -42,7 +42,11 @@ Key architectural decisions locked at roadmap creation. These do NOT need re-eva
 - **Materialized views:** All dashboard aggregations pre-computed via pg_cron (5-minute refresh); raw `request_logs` never scanned on page load — established Phase 2
 - **Realtime on `dashboard_events`:** Subscribe to lightweight summary table, not `request_logs`; single channel per dashboard, not per widget — established Phase 2
 - **PostgreSQL token bucket:** Rate limiter behind swappable interface; Upstash Redis is the named upgrade path, not default — Phase 4
-- **SPRT for A/B auto-stop:** Sequential Probability Ratio Test, not repeated t-tests; minimum 200 samples per variant before any significance check — Phase 4 (needs-research during plan-phase)
+- **SPRT for A/B auto-stop:** Sequential Probability Ratio Test with Wald boundaries (upper=2.773, lower=-1.558 for α=0.05, β=0.20); minimum 200 samples per variant — Phase 4 (RESEARCHED)
+- **Gemini 1.5 deprecated:** Use gemini-2.5-flash (stable) and gemini-2.0-flash as replacements — discovered Phase 2 research
+- **AI SDK 6 token properties:** `usage.inputTokens` / `usage.outputTokens` (NOT promptTokens/completionTokens) — Phase 3 research
+- **LLM-as-judge:** AI SDK 6 `Output.object()` with Zod schema, GPT-4o as judge with self-preference bias documented — Phase 5 research
+- **Alert engine:** pg_cron → pg_net → Next.js route for webhook dispatch with HMAC + retry — Phase 5 research
 - **Server-first rendering:** `"use client"` only on Recharts wrappers, filter dropdowns, and Realtime feed components — all phases
 - **Prototype mode active:** Demo-ready after Phase 2; Phases 3-5 complete the full feature set
 
@@ -75,10 +79,12 @@ See: `.planning/PROJECT.md` (updated 2026-03-01)
 
 ## Next Steps
 
-**Recommended:** `/gsd:research-all`
-**Reason:** Sequential workflow enabled. Research all phases first with cross-phase context accumulation, then analyze for conflicts, then plan all phases with full cross-phase awareness.
+**Recommended:** `/gsd:analyze-research`
+**Reason:** All phases researched. Analyze cross-phase consistency — validate research quality, detect contradictions, and confirm decisions before planning.
+
+**After analysis:** `/gsd:plan-all` — create execution plans for all phases with cross-phase awareness.
 
 ---
 
 *Last updated: 2026-03-01*
-*Updated by: /gsd:new-project (roadmap creation)*
+*Updated by: /gsd:research-all (research complete)*
