@@ -6,7 +6,7 @@
 
 ## Current Position
 
-**Status:** Research complete — all phases researched
+**Status:** Analysis complete — ready to plan
 **Phase:** Phase 1 — Foundation (not started)
 **Plan:** —
 **Task:** —
@@ -79,12 +79,10 @@ See: `.planning/PROJECT.md` (updated 2026-03-01)
 
 ## Next Steps
 
-**Recommended:** `/gsd:analyze-research`
-**Reason:** All phases researched. Analyze cross-phase consistency — validate research quality, detect contradictions, and confirm decisions before planning.
-
-**After analysis:** `/gsd:plan-all` — create execution plans for all phases with cross-phase awareness.
+**Recommended:** `/gsd:plan-all`
+**Reason:** Research complete and cross-validated. 4 CRITICAL issues resolved, 18 cross-phase constraints documented in ANALYSIS-REPORT.md for planners. Ready to create execution plans.
 
 ---
 
 *Last updated: 2026-03-01*
-*Updated by: /gsd:research-all (research complete)*
+*Updated by: /gsd:analyze-research (analysis complete)*

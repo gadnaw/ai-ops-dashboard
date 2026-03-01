@@ -35,7 +35,7 @@
 ## Technical Decisions
 
 - **Vercel AI SDK 6** `createProviderRegistry()` for multi-model routing. NOT LangChain.
-- **Provider adapters:** OpenAI (GPT-4o, GPT-4o-mini), Anthropic (Claude 3.5 Sonnet, Haiku), Google (Gemini 1.5 Pro, Flash)
+- **Provider adapters:** OpenAI (GPT-4o, GPT-4o-mini), Anthropic (Claude Sonnet 4, Haiku 3.5), Google (Gemini 2.5 Flash, Gemini 2.0 Flash)
 - **Fallback chain:** Priority-based with exponential backoff + jitter on 429/5xx
 - **Logging:** Fire-and-forget via `after()` — async, outside request critical path
 - **Database schema:**

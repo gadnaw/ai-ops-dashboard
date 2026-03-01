@@ -36,7 +36,7 @@
   - Active version pointer: `active_version_id` on `prompt_templates`
 - **Template variable parsing:** Simple `{{var}}` regex — extract variable names on save, store in `variables` JSONB column
 - **Diff library:** Character-level diff (e.g., `diff` or `jsdiff` library)
-- **Streaming:** Vercel AI SDK `useChat` hook for token-by-token streaming with `onFinish` callback for token count display
+- **Streaming:** Vercel AI SDK `useCompletion` hook for single-turn playground streaming with `onFinish` callback; live token estimation via `gpt-tokenizer`
 - **Playground requests** go through the same `/api/v1/chat` pipeline as production requests — logged identically
 
 ## Key Risks
