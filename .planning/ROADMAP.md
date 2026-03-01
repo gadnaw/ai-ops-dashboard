@@ -21,7 +21,7 @@ This roadmap delivers a production-grade AI operations dashboard in five phases,
 - Integer phases (1, 2, 3): Planned milestone work
 - Decimal phases (2.1, 2.2): Urgent insertions created via `/gsd:insert-phase`
 
-- [ ] **Phase 1: Foundation** — Clean scaffold with deployment pipeline and auth skeleton
+- [x] **Phase 1: Foundation** — Clean scaffold with deployment pipeline and auth skeleton
 - [ ] **Phase 2: Working Demo** — Core value deployable to shareable URL with seed data
 - [ ] **Phase 3: Prompt Management + Playground** — Prompt versioning, diff view, rollback, and streaming playground
 - [ ] **Phase 4: Reliability + Differentiators** — Graceful degradation + A/B testing with statistical significance
@@ -56,9 +56,9 @@ This roadmap delivers a production-grade AI operations dashboard in five phases,
 **Plans:** 3 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Scaffold: Next.js 15 + Tailwind 4 + TypeScript strict, Prisma schema with dual connection strings, Supabase project init, base folder structure
-- [ ] 01-02-PLAN.md — Auth + RBAC: Supabase Auth, email + OAuth (GitHub, Google), Admin/Developer/Viewer roles, RLS policies, middleware auth guard
-- [ ] 01-03-PLAN.md — DevOps: Vercel CI/CD, preview deployments on PRs, ESLint + Prettier + pre-commit hooks (secret detection, lint, type-check), .env.example
+- [x] 01-01-PLAN.md — Scaffold: Next.js 15 + Tailwind 4 + TypeScript strict, Prisma schema with dual connection strings, Supabase project init, base folder structure
+- [x] 01-02-PLAN.md — Auth + RBAC: Supabase Auth, email + OAuth (GitHub, Google), Admin/Developer/Viewer roles, RLS policies, middleware auth guard
+- [x] 01-03-PLAN.md — DevOps: Vercel CI/CD, preview deployments on PRs, ESLint + Prettier + pre-commit hooks (secret detection, lint, type-check), .env.example
 
 ---
 
@@ -214,8 +214,8 @@ These requirements are documented but NOT mapped to any phase in this milestone.
 
 | REQ-ID | Requirement | Phase | Status |
 |--------|-------------|-------|--------|
-| AUTH-01 | Supabase Auth with RBAC (Admin/Developer/Viewer), RLS enforcement | Phase 1 | Pending |
-| SEC-01 | API key management with per-key usage tracking, SHA-256 hashing, rotation | Phase 1 | Pending |
+| AUTH-01 | Supabase Auth with RBAC (Admin/Developer/Viewer), RLS enforcement | Phase 1 | Complete |
+| SEC-01 | API key management with per-key usage tracking, SHA-256 hashing, rotation | Phase 1 | Complete |
 | INFRA-01 | Multi-model routing with fallback chains (OpenAI, Claude, Gemini) | Phase 2 | Pending |
 | OBS-01 | Per-request cost and latency tracking with breakdown by model/prompt/endpoint | Phase 2 | Pending |
 | OBS-02 | Real-time dashboard (cost trends, latency p50/p95/p99, error rates) via Recharts | Phase 2 | Pending |
@@ -240,7 +240,7 @@ These requirements are documented but NOT mapped to any phase in this milestone.
 
 | Phase | Name | Plans Complete | Status | Completed |
 |-------|------|----------------|--------|-----------|
-| 1 | Foundation | 0/3 | Not started | — |
+| 1 | Foundation | 3/3 | Complete | 2026-03-01 |
 | 2 | Working Demo | 0/4 | Planned | — |
 | 3 | Prompt Management + Playground | 0/3 | Planned | — |
 | 4 | Reliability + Differentiators | 0/3 | Planned | — |
@@ -271,6 +271,6 @@ These are confirmed decisions from research that constrain all phases. Do not re
 
 *Roadmap version: 1.3*
 *Created: 2026-03-01*
-*Updated: 2026-03-01 (Phase 5 plans finalized)*
+*Updated: 2026-03-01 (Phase 1 Foundation complete)*
 *Milestone: Portfolio Demo*
 *Coverage: 12/12 active requirements mapped, 3 deferred*

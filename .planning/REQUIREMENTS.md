@@ -94,8 +94,8 @@
 
 | REQ-ID | Source | Status | Phase | Notes |
 |--------|--------|--------|-------|-------|
-| AUTH-01 | User spec | Active | Phase 1 | Foundation — Supabase Auth + RBAC skeleton |
-| SEC-01 | User spec | Active | Phase 1 | Foundation — API key management, SHA-256 hashing |
+| AUTH-01 | User spec | Complete | Phase 1 | Foundation — Supabase Auth + RBAC skeleton |
+| SEC-01 | User spec | Complete | Phase 1 | Foundation — API key management, SHA-256 hashing |
 | INFRA-01 | User spec | Active | Phase 2 | Working Demo — Vercel AI SDK provider registry, fallback chains |
 | OBS-01 | User spec | Active | Phase 2 | Working Demo — fire-and-forget logging via after(), rate card table |
 | OBS-02 | User spec | Active | Phase 2 | Working Demo — materialized views, Recharts, dashboard_events Realtime |
