@@ -10,6 +10,10 @@ export const env = createEnv({
     SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
     // Auth secret for JWT signing
     NEXTAUTH_SECRET: z.string().min(32).optional(),
+    // LLM Provider API Keys (SERVER ONLY — never prefix with NEXT_PUBLIC_)
+    OPENAI_API_KEY: z.string().min(1),
+    ANTHROPIC_API_KEY: z.string().min(1),
+    GOOGLE_GENERATIVE_AI_API_KEY: z.string().min(1),
   },
   client: {
     // Supabase public keys (anon key is safe to expose — RLS enforced)
@@ -21,6 +25,9 @@ export const env = createEnv({
     DIRECT_URL: process.env.DIRECT_URL,
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
+    GOOGLE_GENERATIVE_AI_API_KEY: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   },

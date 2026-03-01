@@ -9,6 +9,11 @@ import { defineConfig } from "prisma/config";
 //   See src/lib/db/prisma.ts for the runtime PrismaClient configuration.
 
 export default defineConfig({
+  schema: "prisma/schema.prisma",
+  migrations: {
+    path: "prisma/migrations",
+    seed: "tsx prisma/seed.ts",
+  },
   datasource: {
     // Direct connection for migrations — bypasses PgBouncer (port 5432)
     // Falls back to DATABASE_URL if DIRECT_URL is not set (e.g., during pnpm db:generate)

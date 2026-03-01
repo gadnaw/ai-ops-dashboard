@@ -56,3 +56,86 @@ model ApiKey {
   @@index([keyHash])
   @@map("api_keys")
 }
+
+// ----- OBSERVABILITY LAYER -----
+// NOTE: request_logs is created as a NATIVE PARTITIONED TABLE via raw SQL migration.
+// The Prisma model below maps to the parent table for ORM queries (insert, select).
+// Prisma does NOT manage the partitions — they are created via raw SQL in the migration.
+// The composite PK (id, created_at) matches the partition key requirement.
+model RequestLog {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  provider        String    // 'openai' | 'anthropic' | 'google'
+  model           String    // registry model ID e.g. 'openai:gpt-4o'
+  endpoint        String?   // endpoint name e.g. 'summarization', 'classification'
+  inputTokens     Int       @default(0) @map("input_tokens")
+  outputTokens    Int       @default(0) @map("output_tokens")
+  cachedTokens    Int       @default(0) @map("cached_tokens")
+  costUsd         Decimal   @default(0) @map("cost_usd") @db.Decimal(10, 8)
+  durationMs      Int?      @map("duration_ms")
+  status          String    @default("success") // 'success' | 'error' | 'fallback'
+  errorCode       String?   @map("error_code")   // 'rate_limit' | 'timeout' | 'model_error'
+  isFallback      Boolean   @default(false) @map("is_fallback")
+  fallbackReason  String?   @map("fallback_reason")
+  promptText      String?   @map("prompt_text")   // H5: required per analysis constraints
+  responseText    String?   @map("response_text") // H5: required per analysis constraints
+  promptVersionId String?   @map("prompt_version_id") @db.Uuid  // H12: no FK in Phase 2
+  sessionId       String?   @map("session_id") @db.Uuid  // COMP-01 deferred, column present
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([createdAt, provider, model], name: "request_logs_provider_model_idx")
+  @@index([createdAt, costUsd], name: "request_logs_cost_idx")         // M7: Phase 5 alert queries
+  @@index([createdAt, durationMs], name: "request_logs_duration_idx")  // M7: Phase 5 alert queries
+  @@index([createdAt, status], name: "request_logs_status_idx")        // M7: Phase 5 alert queries
+  @@index([promptVersionId, createdAt], name: "request_logs_prompt_version_idx")
+  @@map("request_logs")
+}
+
+// ----- COST RATE CARDS -----
+// Pricing stored in database (not constants) — locked architectural decision.
+// Updated without redeployment when providers change pricing.
+model CostRateCard {
+  id                         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  modelId                    String    @unique @map("model_id")
+  provider                   String
+  displayName                String    @map("display_name")
+  inputPricePerMTokens       Decimal   @map("input_price_per_m_tokens") @db.Decimal(10, 6)
+  outputPricePerMTokens      Decimal   @map("output_price_per_m_tokens") @db.Decimal(10, 6)
+  cachedInputPricePerMTokens Decimal?  @map("cached_input_price_per_m_tokens") @db.Decimal(10, 6)
+  isActive                   Boolean   @default(true) @map("is_active")
+  effectiveDate              DateTime  @map("effective_date") @db.Date
+  createdAt                  DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  @@map("cost_rate_cards")
+}
+
+// ----- DASHBOARD EVENTS -----
+// Lightweight table for Supabase Realtime subscriptions.
+// pg_cron inserts a row here after each mat view refresh cycle.
+// Dashboard subscribes to INSERT events on this table — NOT request_logs.
+// Row count: 1 row per 5-min interval = 288 rows/day — trivially small.
+model DashboardEvent {
+  id        BigInt   @id @default(autoincrement())
+  eventType String   @map("event_type") // 'refresh_complete' | 'fallback_occurred' | 'anomaly'
+  payload   Json     @default("{}")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@map("dashboard_events")
+}
+
+// ----- ENDPOINT CONFIGS -----
+// Per-endpoint model configuration: temperature, max tokens, system prompt, fallback chain.
+// Written by Plan 02-04 Config UI. Read by Plan 02-02 model router.
+model EndpointConfig {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  endpointName  String   @unique @map("endpoint_name") // e.g. 'summarization', 'chat', 'classification'
+  primaryModel  String   @map("primary_model")   // registry ID e.g. 'openai:gpt-4o'
+  fallbackChain Json     @default("[]") @map("fallback_chain") // ordered array of model IDs
+  temperature   Decimal  @default(0.7) @db.Decimal(3, 2)
+  maxTokens     Int      @default(1000) @map("max_tokens")
+  systemPrompt  String?  @map("system_prompt")
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("endpoint_configs")
+}
