@@ -15,6 +15,9 @@ export const env = createEnv({
     OPENAI_API_KEY: z.string().min(1).optional(),
     ANTHROPIC_API_KEY: z.string().min(1).optional(),
     GOOGLE_GENERATIVE_AI_API_KEY: z.string().min(1).optional(),
+    // Phase 5: Internal cron secret — shared between pg_cron jobs and /api/internal/* routes
+    // Optional for local dev; required in production for evaluation processor security
+    INTERNAL_CRON_SECRET: z.string().min(32).optional(),
   },
   client: {
     // Supabase public keys (anon key is safe to expose — RLS enforced)
@@ -29,6 +32,7 @@ export const env = createEnv({
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
     GOOGLE_GENERATIVE_AI_API_KEY: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+    INTERNAL_CRON_SECRET: process.env.INTERNAL_CRON_SECRET,
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   },

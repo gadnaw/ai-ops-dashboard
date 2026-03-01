@@ -7,6 +7,7 @@ import { getVersion } from "@/lib/prompts/queries";
 import { prisma } from "@/lib/db/prisma";
 import { getRateLimiter, runDegradationChain, setCachedResponse } from "@/lib/rate-limiter";
 import { getActiveExperiment, runExperiment } from "@/lib/ab-testing/experiment-runner";
+import { maybeQueueEvaluation } from "@/lib/evaluator/trigger";
 import type { NextRequest } from "next/server";
 
 export const runtime = "nodejs"; // after() requires Node.js runtime (not Edge)
@@ -276,6 +277,14 @@ export async function POST(request: NextRequest) {
         }
       } catch (abErr) {
         console.error("[after] A/B experiment recording failed (non-fatal):", abErr);
+      }
+
+      // Phase 5: Queue evaluation at 10% sampling rate (deterministic FNV-1a)
+      // Analysis constraint M11: same requestId always evaluates or always skips
+      try {
+        await maybeQueueEvaluation(requestId, 0.1);
+      } catch (evalErr) {
+        console.error("[after] maybeQueueEvaluation failed (non-fatal):", evalErr);
       }
     } catch (logError) {
       // Logging failure must NEVER propagate — response already sent
