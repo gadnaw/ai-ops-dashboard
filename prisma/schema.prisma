@@ -1,0 +1,58 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ----- USER IDENTITY -----
+// Mirrors Supabase auth.users. All application FKs reference profiles(id).
+// DO NOT reference auth.users(id) directly from application tables.
+model Profile {
+  id        String   @id @db.Uuid
+  email     String   @unique
+  role      Role     @default(VIEWER)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  apiKeys   ApiKey[]
+
+  @@map("profiles")
+}
+
+enum Role {
+  ADMIN
+  DEVELOPER
+  VIEWER
+
+  @@map("role")
+}
+
+// ----- API KEY MANAGEMENT -----
+// Plaintext key shown once at creation. Only SHA-256 hash persisted.
+// Per-key rate limit overrides: null means use global defaults.
+// Phase 4 rate_limit_events table has FK to api_keys(id).
+model ApiKey {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  profileId      String    @map("profile_id") @db.Uuid
+  label          String
+  // SHA-256 hash of the plaintext key (hex string, 64 chars)
+  keyHash        String    @unique @map("key_hash")
+  // Display prefix only — e.g. "sk-...abc4" (first 4 + last 4 chars of plaintext)
+  keyPrefix      String    @map("key_prefix")
+  // Per-key rate limit overrides. NULL means use global defaults.
+  rateLimitRpm   Int?      @map("rate_limit_rpm")
+  rateLimitTpm   Int?      @map("rate_limit_tpm")
+  expiresAt      DateTime? @map("expires_at") @db.Timestamptz
+  lastUsedAt     DateTime? @map("last_used_at") @db.Timestamptz
+  revokedAt      DateTime? @map("revoked_at") @db.Timestamptz
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  profile        Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@index([keyHash])
+  @@map("api_keys")
+}
