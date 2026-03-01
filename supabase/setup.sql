@@ -109,9 +109,62 @@ CREATE POLICY "api_keys_admin_all"
   );
 
 -- =============================================================================
+-- PHASE 2 SETUP — Run after applying Phase 2 migrations
+-- =============================================================================
+-- Prerequisites:
+--   1. Enable pg_cron: Supabase Dashboard > Database > Extensions > pg_cron
+--   2. Apply prisma/migrations/20260301000001_phase2_base_tables/migration.sql
+--   3. Apply prisma/migrations/20260301000002_phase2_advanced_sql/migration.sql
+--   4. Then run the pg_cron and Realtime sections below
+
+-- =============================================================================
+-- SUPABASE REALTIME — Enroll dashboard_events in publication
+-- Run AFTER creating the dashboard_events table (migration 20260301000002)
+-- =============================================================================
+
+ALTER PUBLICATION supabase_realtime ADD TABLE dashboard_events;
+
+-- =============================================================================
+-- pg_cron REFRESH SCHEDULE
+-- Requires pg_cron extension enabled in Supabase Dashboard > Database > Extensions.
+-- All three materialized views refresh every 5 minutes.
+-- dashboard_events INSERT follows each cycle for Realtime notifications.
+-- =============================================================================
+
+CREATE EXTENSION IF NOT EXISTS pg_cron;
+
+SELECT cron.schedule(
+  'refresh-cost-summary',
+  '*/5 * * * *',
+  'REFRESH MATERIALIZED VIEW CONCURRENTLY hourly_cost_summary'
+);
+
+SELECT cron.schedule(
+  'refresh-latency-percentiles',
+  '*/5 * * * *',
+  'REFRESH MATERIALIZED VIEW CONCURRENTLY hourly_latency_percentiles'
+);
+
+SELECT cron.schedule(
+  'refresh-model-breakdown',
+  '*/5 * * * *',
+  'REFRESH MATERIALIZED VIEW CONCURRENTLY daily_model_breakdown'
+);
+
+SELECT cron.schedule(
+  'notify-dashboard-refresh',
+  '*/5 * * * *',
+  $$INSERT INTO dashboard_events (event_type, payload) VALUES ('refresh_complete', '{}')$$
+);
+
+-- =============================================================================
 -- VERIFICATION QUERIES
 -- Run these after setup to confirm everything is configured correctly:
 -- =============================================================================
 -- SELECT * FROM information_schema.tables WHERE table_schema = 'public';
 -- SELECT tgname, tgenabled FROM pg_trigger WHERE tgname = 'on_auth_user_created';
 -- SELECT schemaname, tablename, rowsecurity FROM pg_tables WHERE schemaname = 'public';
+-- Phase 2 verification:
+-- SELECT jobname, schedule, command FROM cron.job;
+-- SELECT matviewname FROM pg_matviews WHERE schemaname = 'public';
+-- SELECT pubname, pubtables FROM pg_publication p JOIN pg_publication_tables t ON p.pubname = t.pubname WHERE p.pubname = 'supabase_realtime' AND t.tablename = 'dashboard_events';
