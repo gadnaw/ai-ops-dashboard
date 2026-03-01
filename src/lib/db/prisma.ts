@@ -20,7 +20,7 @@ const globalForPrisma = globalThis as unknown as {
 function createPrismaClient(): PrismaClient {
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    max: 1, // connection_limit=1 for serverless (Pitfall 1)
+    max: 5, // Allow parallel queries (Next.js parallel route slots)
   });
 
   globalForPrisma.pool = pool;

@@ -21,14 +21,19 @@ export async function getTimeRangeFromCookies(): Promise<TimeRange> {
   return "30d";
 }
 
-function getTimeBucketSQL(timeRange: TimeRange): string {
+// Returns a Prisma.raw() fragment for the bucket interval.
+// Uses Prisma.raw() (not parameterized) because:
+// 1. date_bin() needs an interval literal, not a parameterized string
+// 2. Supabase Supavisor pooler has issues with prepared statements
+// Values are from a fixed enum so injection is not possible.
+function getTimeBucketRaw(timeRange: TimeRange): Prisma.Sql {
   switch (timeRange) {
     case "24h":
-      return "15 minutes";
+      return Prisma.raw("'15 minutes'::interval");
     case "7d":
-      return "1 hour";
+      return Prisma.raw("'1 hour'::interval");
     case "30d":
-      return "6 hours";
+      return Prisma.raw("'6 hours'::interval");
   }
 }
 
@@ -69,7 +74,7 @@ export async function fetchCostSummary(
   }>
 > {
   const startTime = getStartTime(timeRange);
-  const bucket = getTimeBucketSQL(timeRange);
+  const bucket = getTimeBucketRaw(timeRange);
 
   // Use Prisma.sql for dynamic provider filter — cannot nest $queryRaw calls
   const providerFilter =
@@ -87,7 +92,7 @@ export async function fetchCostSummary(
   >(
     Prisma.sql`
     SELECT
-      date_bin(${bucket}::interval, hour, '2024-01-01'::timestamptz) AS bucket,
+      date_bin(${bucket}, hour, '2024-01-01'::timestamptz) AS bucket,
       provider,
       model,
       SUM(total_cost)              AS total_cost,
@@ -96,7 +101,7 @@ export async function fetchCostSummary(
     FROM hourly_cost_summary
     WHERE hour >= ${startTime}
     ${providerFilter}
-    GROUP BY date_bin(${bucket}::interval, hour, '2024-01-01'::timestamptz), provider, model
+    GROUP BY date_bin(${bucket}, hour, '2024-01-01'::timestamptz), provider, model
     ORDER BY bucket ASC
   `
   );
@@ -127,7 +132,7 @@ export async function fetchLatencyPercentiles(
   }>
 > {
   const startTime = getStartTime(timeRange);
-  const bucket = getTimeBucketSQL(timeRange);
+  const bucket = getTimeBucketRaw(timeRange);
 
   const providerFilter =
     providers && providers.length > 0 ? Prisma.sql`AND provider = ANY(${providers})` : Prisma.empty;
@@ -144,7 +149,7 @@ export async function fetchLatencyPercentiles(
   >(
     Prisma.sql`
     SELECT
-      date_bin(${bucket}::interval, hour, '2024-01-01'::timestamptz) AS bucket,
+      date_bin(${bucket}, hour, '2024-01-01'::timestamptz) AS bucket,
       provider,
       percentile_cont(0.50) WITHIN GROUP (ORDER BY p50)            AS p50,
       percentile_cont(0.95) WITHIN GROUP (ORDER BY p95)            AS p95,
@@ -153,7 +158,7 @@ export async function fetchLatencyPercentiles(
     FROM hourly_latency_percentiles
     WHERE hour >= ${startTime}
     ${providerFilter}
-    GROUP BY date_bin(${bucket}::interval, hour, '2024-01-01'::timestamptz), provider
+    GROUP BY date_bin(${bucket}, hour, '2024-01-01'::timestamptz), provider
     ORDER BY bucket ASC
   `
   );
@@ -218,7 +223,7 @@ export async function fetchRequestVolume(timeRange: TimeRange): Promise<
   }>
 > {
   const startTime = getStartTime(timeRange);
-  const bucket = getTimeBucketSQL(timeRange);
+  const bucket = getTimeBucketRaw(timeRange);
 
   const rows = await prisma.$queryRaw<
     Array<{
@@ -230,13 +235,13 @@ export async function fetchRequestVolume(timeRange: TimeRange): Promise<
   >(
     Prisma.sql`
     SELECT
-      date_bin(${bucket}::interval, hour, '2024-01-01'::timestamptz) AS bucket,
+      date_bin(${bucket}, hour, '2024-01-01'::timestamptz) AS bucket,
       SUM(request_count)           AS total_requests,
       SUM(error_count)             AS error_requests,
       SUM(fallback_count)          AS fallback_requests
     FROM hourly_cost_summary
     WHERE hour >= ${startTime}
-    GROUP BY date_bin(${bucket}::interval, hour, '2024-01-01'::timestamptz)
+    GROUP BY date_bin(${bucket}, hour, '2024-01-01'::timestamptz)
     ORDER BY bucket ASC
   `
   );
