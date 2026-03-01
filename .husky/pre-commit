@@ -1,0 +1,36 @@
+# =============================================================================
+# GUARD 1: Secret Detection (Pitfall 4 — API Key Exposure)
+# =============================================================================
+# Block any commit that sets a NEXT_PUBLIC_*KEY variable to a value.
+# LLM provider API keys prefixed with NEXT_PUBLIC_ are exposed to browsers.
+# This is a hard stop — no bypass allowed.
+
+STAGED_FILES=$(git diff --cached --name-only)
+
+if [ -n "$STAGED_FILES" ]; then
+  # Match added lines where NEXT_PUBLIC_*KEY appears in a variable assignment or object key context.
+  # Excludes comment lines (lines starting with optional whitespace + # after the diff + prefix).
+  MATCHES=$(git diff --cached | grep -E "^\+" | grep -vE "^\+\s*#" | grep -E "NEXT_PUBLIC_[A-Z_]*KEY" || true)
+  if [ -n "$MATCHES" ]; then
+    echo ""
+    echo "  ERROR: Secret Detection Failed"
+    echo "  ─────────────────────────────────────────────"
+    echo "  Detected NEXT_PUBLIC_*KEY pattern in staged changes."
+    echo "  LLM provider API keys MUST NOT be prefixed with NEXT_PUBLIC_"
+    echo "  because this exposes them in client-side JavaScript bundles."
+    echo ""
+    echo "  Offending lines:"
+    echo "$MATCHES" | head -10
+    echo ""
+    echo "  Fix: Move the key to a server-only environment variable (no NEXT_PUBLIC_ prefix)."
+    echo "  All LLM provider calls must go through server-side API routes."
+    echo "  ─────────────────────────────────────────────"
+    echo ""
+    exit 1
+  fi
+fi
+
+# =============================================================================
+# GUARD 2: Lint-staged (ESLint + Prettier + TypeScript)
+# =============================================================================
+pnpm lint-staged
