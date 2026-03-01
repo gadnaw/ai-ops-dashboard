@@ -17,13 +17,18 @@ export type { PromptTemplate, PromptVersion } from "@prisma/client";
 // ---------------------------------------------------------------------------
 
 /**
- * Return all templates with their active version included.
+ * Return all templates with their active version and latest version number included.
  * Ordered by creation time descending (newest first).
  */
 export async function getTemplates() {
   return prisma.promptTemplate.findMany({
     include: {
       activeVersion: true,
+      // Include only the latest version for version number display
+      versions: {
+        orderBy: { version: "desc" },
+        take: 1,
+      },
     },
     orderBy: { createdAt: "desc" },
   });
@@ -49,6 +54,24 @@ export async function getTemplateBySlug(slug: string) {
 export async function getTemplateWithVersions(id: string) {
   return prisma.promptTemplate.findUnique({
     where: { id },
+    include: {
+      activeVersion: true,
+      versions: {
+        orderBy: { version: "desc" },
+      },
+    },
+  });
+}
+
+/**
+ * Return a template by slug with ALL its versions ordered by version number descending.
+ * Includes the active version reference.
+ * Used by prompt detail pages which receive the slug from URL params.
+ * Returns null if not found.
+ */
+export async function getTemplateWithVersionsBySlug(slug: string) {
+  return prisma.promptTemplate.findUnique({
+    where: { slug },
     include: {
       activeVersion: true,
       versions: {
@@ -100,4 +123,34 @@ export async function getTwoVersionsForDiff(templateId: string) {
     orderBy: { version: "desc" },
     take: 2,
   });
+}
+
+/**
+ * Return two specific versions by their IDs for the diff view.
+ * Used by the diff page which receives v1Id and v2Id from URL query params.
+ * Throws if either version is not found.
+ */
+export async function getTwoVersionsByIds(
+  v1Id: string,
+  v2Id: string
+): Promise<{
+  v1: { id: string; version: number; content: string; systemPrompt: string | null };
+  v2: { id: string; version: number; content: string; systemPrompt: string | null };
+}> {
+  const [v1, v2] = await Promise.all([
+    prisma.promptVersion.findUnique({
+      where: { id: v1Id },
+      select: { id: true, version: true, content: true, systemPrompt: true },
+    }),
+    prisma.promptVersion.findUnique({
+      where: { id: v2Id },
+      select: { id: true, version: true, content: true, systemPrompt: true },
+    }),
+  ]);
+
+  if (!v1 || !v2) {
+    throw new Error(`Version not found: ${!v1 ? v1Id : ""} ${!v2 ? v2Id : ""}`.trim());
+  }
+
+  return { v1, v2 };
 }
