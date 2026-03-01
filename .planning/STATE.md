@@ -196,10 +196,12 @@ Key architectural decisions locked at roadmap creation. These do NOT need re-eva
 - Platform: Vercel
 - Environment: Production
 - URL: https://c1-ai-observability-platform.vercel.app
-- Timestamp: 2026-03-01T12:22:00Z
-- Risk score: 33/100 (MEDIUM)
-- Git SHA: ae3c024
+- Timestamp: 2026-03-02T03:22:00+08:00
+- Risk score: 46/100 (MEDIUM)
+- Git SHA: 46f28ee
+- Previous SHA: ae3c024
 - Monitoring: ACTIVE (24h health check window)
+- Fixes: date_bin bucketing, Prisma.raw() for intervals, pg.Pool max:5
 
 ## Blockers
 
@@ -297,7 +299,7 @@ See: `.planning/PROJECT.md` (updated 2026-03-01)
 - Variable utils: `import { extractVariables, interpolateVariables } from '@/lib/prompts/variables'`
 - REST endpoints: GET/POST /api/v1/prompts, POST /api/v1/prompts/[id]/rollback
 - Chat extension: POST /api/v1/chat accepts promptVersionId + modelId for playground routing
-- Migration auth: Use postgres:REDACTED@db.ksrmiaigyezhvuktimqt.supabase.co:5432 for direct SQL
+- Migration auth: Use DIRECT_URL from .env.local for direct SQL
 
 ---
 
