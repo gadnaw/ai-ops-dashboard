@@ -6,11 +6,11 @@
 
 ## Current Position
 
-**Status:** Phase 3 complete — 3/3 plans done
-**Phase:** Phase 3 — Prompt Management + Playground
-**Plan:** 03-03 complete (Playground)
+**Status:** Phase 4 in progress — 1/3 plans done
+**Phase:** Phase 4 — Reliability + Differentiators
+**Plan:** 04-01 complete (Rate Limiter)
 **Task:** —
-**Last activity:** 2026-03-01 — Completed 03-03 (PlaygroundForm/useCompletion, TokenCounter, ModelSelector, PromptVersionPicker, /playground page, nav links)
+**Last activity:** 2026-03-01 — Completed 04-01 (rate_limit_buckets/events/response_cache tables, check_rate_limit() PL/pgSQL, RateLimiterInterface, PostgresRateLimiter, four-stage degradation chain, /api/v1/chat integration)
 
 ## Progress
 
@@ -18,9 +18,9 @@
 Phase 1 █████ 3/3 plans complete
 Phase 2 █████ 4/4 plans complete
 Phase 3 █████ 3/3 plans complete
-Phase 4 ░░░░░ 0/3 plans complete
+Phase 4 █░░░░ 1/3 plans complete
 Phase 5 ░░░░░ 0/3 plans complete
-Overall: 10/16 plans complete (63%)
+Overall: 11/16 plans complete (69%)
 ```
 
 ### Milestone Progress
@@ -30,7 +30,7 @@ Overall: 10/16 plans complete (63%)
 | 1 | Foundation | Complete | 3/3 | Scaffold, Auth+RBAC, DevOps all done |
 | 2 | Working Demo | Complete | 4/4 | All plans complete — data layer, model router, dashboard UI, config UI + seed |
 | 3 | Prompt Management + Playground | Complete | 3/3 | Prompt service + UI + Playground all done |
-| 4 | Reliability + Differentiators | Planned | 3/3 | Rate limiter, Degradation viz, A/B testing — 8 tasks |
+| 4 | Reliability + Differentiators | In Progress | 1/3 | 04-01 Rate Limiter complete |
 | 5 | Evaluation + Alerts | Planned | 3/3 | Eval service, Human review, Alert engine — 9 tasks |
 
 ### Current Phase Detail
@@ -59,6 +59,14 @@ Overall: 10/16 plans complete (63%)
 | 03-01 Prompt Manager Service | Complete | 3/3 | db3c604 |
 | 03-02 Prompt UI | Complete | 2/2 | ca73379 |
 | 03-03 Playground | Complete | 2/2 | ab243cc |
+
+**Phase 4: Reliability + Differentiators** — In Progress (1/3 plans done).
+
+| Plan | Status | Tasks | Last Commit |
+|------|--------|-------|-------------|
+| 04-01 Rate Limiter | Complete | 3/3 | 7516885 |
+| 04-02 Degradation Visualization | Planned | — | — |
+| 04-03 A/B Testing | Planned | — | — |
 
 ## Accumulated Decisions
 
@@ -149,6 +157,16 @@ Key architectural decisions locked at roadmap creation. These do NOT need re-eva
 - **useMemo for token count:** TokenCounter uses `useMemo` not `useEffect + setState` to count tokens. ESLint `react-hooks/set-state-in-effect` blocks synchronous setState inside useEffect.
 - **Next.js Link for internal nav:** ESLint rule `@next/next/no-html-link-for-pages` requires `<Link>` from `next/link` for all internal routes — `<a href>` is only for external URLs.
 
+### Decisions from 04-01
+
+- **RateLimiterInterface abstraction:** PostgresRateLimiter is the Phase 4 default. `getRateLimiter()` singleton at `src/lib/rate-limiter/index.ts` is the ONLY import call sites use. Upstash Redis is the named upgrade path — swap one line in index.ts, zero call-site changes.
+- **PL/pgSQL token bucket (no Upstash):** `check_rate_limit()` function: atomic UPDATE + RETURNING + INSERT ON CONFLICT for concurrent-safe initialization. ~10-15ms per call. Bucket ID format: `apikey:{uuid}:rpm`.
+- **Four-stage degradation before 429:** Stage 1=queue 10s, Stage 2=fallback model (FALLBACK_MODEL_MAP), Stage 3=response_cache lookup, Stage 4=429 with Retry-After. Every transition logged to `rate_limit_events`.
+- **Rate limiting skips unauthenticated requests:** Only `Authorization: Bearer {key}` requests are rate-limited. Dashboard/playground demo traffic without API keys bypasses degradation chain entirely.
+- **SHA-256 prompt hash for cache key:** Normalized (trim+lowercase+whitespace-collapse) prompt hashed to hex string. Composite unique key `(prompt_hash, model)` in `response_cache`. TTL default 24h.
+- **exactOptionalPropertyTypes requires conditional spread in setCachedResponse opts:** When calling functions with optional number fields, must use `...(val !== undefined ? { key: val } : {})` not `{ key: val }` (val may be undefined).
+- **Stage 2 fallback uses same API key bucket:** Simplification for demo — production would use per-model buckets. Means if bucket is deeply negative, both Stage 1 and Stage 2 fail, progressing to Stage 3.
+
 ## Last Deploy
 
 - Status: DEPLOYED
@@ -190,13 +208,22 @@ See: `.planning/PROJECT.md` (updated 2026-03-01)
 ## Session Continuity
 
 **Last session:** 2026-03-01
-**Stopped at:** Phase 3 Plan 03-03 complete — PlaygroundForm/useCompletion, TokenCounter, ModelSelector, PromptVersionPicker, /playground page, nav links
+**Stopped at:** Phase 4 Plan 04-01 complete — rate_limit_buckets/events/response_cache tables, check_rate_limit() PL/pgSQL, RateLimiterInterface, PostgresRateLimiter, four-stage degradation chain, /api/v1/chat integration with cache-write
 **Resume file:** None — continue Phase 4
 
 ## Next Steps
 
-**Recommended:** Execute Phase 4 (Reliability + Differentiators)
+**Recommended:** Execute Phase 4 Plan 04-02 (Degradation Visualization)
 **Command:** `/gsd:execute-phase 4`
+
+**Key additions from 04-01 for 04-02/04-03:**
+- Rate limiter: `import { getRateLimiter } from '@/lib/rate-limiter'`
+- Degradation chain: `import { runDegradationChain } from '@/lib/rate-limiter'`
+- Response cache: `import { getCachedResponse, setCachedResponse, hashPrompt } from '@/lib/rate-limiter'`
+- Tables for 04-02 viz: `rate_limit_events` (stage 1-4 rows), `rate_limit_buckets` (current token state), `response_cache` (hit count)
+- Interface types: `import type { RateLimiterInterface, RateLimitResult, DegradationResult } from '@/lib/rate-limiter'`
+- Migration applied: direct pg client to db.ksrmiaigyezhvuktimqt.supabase.co:5432 (same pattern as 03-01)
+- Rate limiting skips requests without Authorization header (unauthenticated playground traffic unaffected)
 
 **Key handoff context for Phase 3:**
 - Config UI: `import { updateEndpointConfig } from '@/app/(dashboard)/config/actions'`
