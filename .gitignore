@@ -50,8 +50,8 @@ next-env.d.ts
 # OS
 Thumbs.db
 
-# Planning checkpoints (transient session state)
-.planning/checkpoints/
+# Planning (internal dev tooling)
+.planning/
 
 .vercel
 .mcp.json
@@ -60,16 +60,6 @@ Thumbs.db
 
 # Claude Code local settings
 .claude/
-
-# Planning internal artifacts (dev tooling, not source code)
-.planning/memory/
-.planning/toolkit/
-.planning/health/
-.planning/dependencies/
-.planning/checkpoints/
-.planning/DEPLOY-PLAN.md
-.planning/DEPLOY-REPORT.md
-.planning/DEPLOY-RUNBOOK.md
 
 # Root-level planning docs (duplicated in .planning/)
 CATALOG.md
