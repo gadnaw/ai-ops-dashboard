@@ -2,6 +2,8 @@ import "dotenv/config";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
+import { seedEvaluations } from "../src/db/seed/evaluations";
+import { seedAlerts } from "../src/db/seed/alerts";
 
 // Prisma 7: Driver adapter is mandatory. Use DIRECT_URL (port 5432, no pgbouncer).
 // pgbouncer (DATABASE_URL) is incompatible with transaction-mode batch operations.
@@ -239,17 +241,20 @@ export async function seedBaseData(): Promise<void> {
 }
 
 // =============================================================================
-// seedEvaluationAndAlerts — Phase 5 stub
-// Phase 5 imports this from prisma/seed.ts and calls it after seedBaseData().
-// DO NOT implement here — stub only ensures the export exists for Phase 5 to extend.
+// seedEvaluationAndAlerts — Phase 5: Evaluation scores + Alert history
+// H11: Modular composition — calls seedBaseData() first, then adds Phase 5 data
 // =============================================================================
 
 export async function seedEvaluationAndAlerts(): Promise<void> {
-  console.log("seedEvaluationAndAlerts: not yet implemented (Phase 5)");
-  // Phase 5 implementation:
-  // - Add evaluation_scores rows linked to request_logs
-  // - Add alert_events with the day-15 anomaly trigger
-  // - Add human review queue entries
+  console.log("Phase 5 seed: evaluation scores + alert history");
+
+  console.log("Step 1: Seeding evaluation data...");
+  await seedEvaluations(prisma);
+
+  console.log("Step 2: Seeding alert rules and history...");
+  await seedAlerts(prisma);
+
+  console.log("Phase 5 seed complete.");
 }
 
 // =============================================================================
@@ -261,16 +266,32 @@ async function main() {
   console.log("Using DIRECT_URL (port 5432, bypasses pgbouncer)");
 
   // Clear existing seed data before re-seeding (idempotent)
-  console.log("Clearing existing request_logs...");
+  console.log("Clearing existing data...");
+  // Clear Phase 5 data first (FK references)
+  await prisma.$executeRawUnsafe("TRUNCATE alert_history CASCADE");
+  await prisma.$executeRawUnsafe("TRUNCATE alert_rules CASCADE");
+  await prisma.$executeRawUnsafe("TRUNCATE evaluation_scores CASCADE");
+  await prisma.$executeRawUnsafe("TRUNCATE evaluation_jobs CASCADE");
   await prisma.$executeRawUnsafe("TRUNCATE request_logs CASCADE");
   console.log("Cleared.");
 
+  // Phase 2: Base data (10K request_logs + mat view refresh)
   await seedBaseData();
+
+  // Phase 5: Evaluation scores + Alert history (day-15 incident story)
+  console.log("");
+  await seedEvaluationAndAlerts();
 
   console.log("");
   console.log("=== Seed Summary ===");
-  const count = await prisma.requestLog.count();
-  console.log(`Total request_logs rows: ${count.toLocaleString()}`);
+  const requestCount = await prisma.requestLog.count();
+  const evalCount = await prisma.evaluationScore.count();
+  const ruleCount = await prisma.alertRule.count();
+  const historyCount = await prisma.alertHistory.count();
+  console.log(`Total request_logs rows: ${requestCount.toLocaleString()}`);
+  console.log(`Total evaluation_scores rows: ${evalCount.toLocaleString()}`);
+  console.log(`Total alert_rules rows: ${ruleCount}`);
+  console.log(`Total alert_history rows: ${historyCount}`);
   console.log("Dashboard is ready. Visit /dashboard to see charts.");
 }
 

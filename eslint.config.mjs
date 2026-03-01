@@ -36,7 +36,7 @@ const eslintConfig = defineConfig([
 
   // Relax rules for config files, test utilities, and seed scripts
   {
-    files: ["*.config.{js,mjs,ts}", "src/test/**", "e2e/**", "prisma/**"],
+    files: ["*.config.{js,mjs,ts}", "src/test/**", "e2e/**", "prisma/**", "src/db/seed/**"],
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
       "no-console": "off",
