@@ -6,11 +6,11 @@
 
 ## Current Position
 
-**Status:** Phase 5 in progress — 2/3 plans done
-**Phase:** Phase 5 — Evaluation + Alerts
-**Plan:** 05-02 complete (Human Review Queue)
+**Status:** ALL PHASES COMPLETE -- 16/16 plans done
+**Phase:** Phase 5 -- Evaluation + Alerts (COMPLETE)
+**Plan:** 05-03 complete (Alert Engine)
 **Task:** --
-**Last activity:** 2026-03-02 — Completed 05-02 (approveScore/overrideScore Server Actions, review queue page with Client Islands, EvalTrend chart, evaluation overview page, nav link)
+**Last activity:** 2026-03-02 -- Completed 05-03 (alert tables, check_alert_rules() PL/pgSQL, HMAC webhook dispatch, /alerts UI, seed data with day-15 incident)
 
 ## Progress
 
@@ -19,8 +19,8 @@ Phase 1 █████ 3/3 plans complete
 Phase 2 █████ 4/4 plans complete
 Phase 3 █████ 3/3 plans complete
 Phase 4 █████ 3/3 plans complete
-Phase 5 ██░░░ 2/3 plans complete
-Overall: 15/16 plans complete (93%)
+Phase 5 █████ 3/3 plans complete
+Overall: 16/16 plans complete (100%)
 ```
 
 ### Milestone Progress
@@ -28,10 +28,10 @@ Overall: 15/16 plans complete (93%)
 | Phase | Name | Status | Plans | Notes |
 |-------|------|--------|-------|-------|
 | 1 | Foundation | Complete | 3/3 | Scaffold, Auth+RBAC, DevOps all done |
-| 2 | Working Demo | Complete | 4/4 | All plans complete — data layer, model router, dashboard UI, config UI + seed |
+| 2 | Working Demo | Complete | 4/4 | All plans complete -- data layer, model router, dashboard UI, config UI + seed |
 | 3 | Prompt Management + Playground | Complete | 3/3 | Prompt service + UI + Playground all done |
 | 4 | Reliability + Differentiators | Complete | 3/3 | Rate Limiter, Degradation Viz, A/B Testing all done |
-| 5 | Evaluation + Alerts | In Progress | 2/3 | Eval service + Human review done; Alert engine remains |
+| 5 | Evaluation + Alerts | Complete | 3/3 | Eval service + Human review + Alert engine all done |
 
 ### Current Phase Detail
 
@@ -68,13 +68,13 @@ Overall: 15/16 plans complete (93%)
 | 04-02 Degradation Visualization | Complete | 2/2 | 9a0e260 |
 | 04-03 A/B Testing | Complete | 3/3 | d2046fc |
 
-**Phase 5: Evaluation + Alerts** — In progress (2/3 plans done).
+**Phase 5: Evaluation + Alerts** -- Complete (3/3 plans done).
 
 | Plan | Status | Tasks | Last Commit |
 |------|--------|-------|-------------|
 | 05-01 Evaluation Service | Complete | 3/3 | f99a990 |
 | 05-02 Human Review | Complete | 3/3 | febdab2 |
-| 05-03 Alert Engine | Planned | -- | -- |
+| 05-03 Alert Engine | Complete | 3/3 | fe59600 |
 
 ## Accumulated Decisions
 
@@ -218,7 +218,7 @@ No checkpoint files.
 See: `.planning/PROJECT.md` (updated 2026-03-01)
 
 **Core value:** Ship AI that works in production, not just in notebooks.
-**Current focus:** Phase 5 Evaluation + Alerts — 2/3 plans done (Eval service + Human review complete)
+**Current focus:** ALL PHASES COMPLETE -- 16/16 plans done across 5 phases
 
 ## Configuration
 
@@ -231,13 +231,18 @@ See: `.planning/PROJECT.md` (updated 2026-03-01)
 ## Session Continuity
 
 **Last session:** 2026-03-02
-**Stopped at:** Phase 5 Plan 05-02 complete — approveScore/overrideScore Server Actions, review queue page, EvalTrend chart, evaluation overview page, nav link
-**Resume file:** None — continue Phase 5 with 05-03 Alert Engine
+**Stopped at:** Phase 5 Plan 05-03 complete -- Alert engine with tables, PL/pgSQL function, HMAC webhook dispatch, UI, and seed data
+**Resume file:** None -- ALL PHASES COMPLETE (16/16 plans)
 
 ## Next Steps
 
-**Recommended:** Execute Phase 5 Plan 05-03 (Alert Engine)
-**Command:** `/gsd:execute-phase 5`
+**All 5 phases complete.** The AI Ops Dashboard portfolio demo is feature-complete.
+
+**Recommended next actions:**
+1. Run `pnpm db:seed` to populate seed data with Phase 5 evaluation + alert data
+2. Deploy to production: `vercel --prod`
+3. Verify /alerts and /alerts/rules pages in production
+4. Configure pg_cron alert jobs in Supabase SQL Editor (see prisma/migrations/pg_cron_alerts.sql)
 
 **Key additions from 04-02 for 04-03:**
 - Degradation queries: `import { getDegradationEvents, groupIntoChains, getDegradationStats } from '@/lib/degradation/queries'`
@@ -361,5 +366,31 @@ See: `.planning/PROJECT.md` (updated 2026-03-01)
 
 ---
 
+### Decisions from 05-03
+
+- **Auth pattern in Server Actions:** Use `import { getSession } from '@/lib/auth/session'` with `session?.userId` check. The plan's `auth()` does not exist in this codebase.
+- **Server Action return pattern:** `{ success: true } | { error: string }` with try/catch wrapping. Client uses `'error' in result` for discriminated union. Matches 05-02 pattern.
+- **Seed functions accept PrismaClient parameter:** `seedEvaluations(prisma)` and `seedAlerts(prisma)` take explicit PrismaClient to isolate from Next.js runtime (seed runs via `tsx prisma/seed.ts`).
+- **src/db/seed/ ESLint relaxation:** Added `"src/db/seed/**"` to eslint.config.mjs relaxed-rules override (no-console: off). Seed scripts need console.log for progress reporting.
+- **startTransition void return:** Wrap Server Action calls in `async () => { await action(); }` to satisfy React's `() => void | Promise<void>` type requirement when actions return discriminated unions.
+- **Alert seed dates are relative:** Computed from `now() - 30 days` (seed start) rather than hardcoded calendar dates, keeping the day-15 incident story consistent regardless of when seed runs.
+
+---
+
+**Key additions from 05-03:**
+- Alert services: `import { runAlertCheck } from '@/lib/alerts/check'`, `import { dispatchWebhook } from '@/lib/alerts/dispatch'`
+- Schema: alert_rules, alert_history tables (migration 20260302100000)
+- PL/pgSQL: `check_alert_rules()` function -- uses duration_ms and SUM(cost_usd) per ANALYSIS-REPORT C2/C3
+- Internal route: `POST /api/internal/check-alerts` with x-internal-secret header (INTERNAL_CRON_SECRET)
+- pg_cron setup: `prisma/migrations/pg_cron_alerts.sql` (pg_cron + pg_net + Vault configuration)
+- Server Actions: acknowledgeAlert, resolveAlert, createAlertRule, toggleAlertRule, deleteAlertRule, testWebhook at `src/app/actions/alerts.ts`
+- Components: AlertStatusBadge, AlertHistoryTable (Client Island), AlertRuleForm (Client Island)
+- Routes: /alerts (history with acknowledge/resolve), /alerts/rules (CRUD form + rule list)
+- Nav: Alerts link added to nav.tsx at `/alerts`
+- Seed: `src/db/seed/evaluations.ts` (FNV-1a 10% sample, score distribution), `src/db/seed/alerts.ts` (3 rules + 3 history events)
+- Updated `prisma/seed.ts`: seedBaseData() then seedEvaluationAndAlerts()
+
+---
+
 *Last updated: 2026-03-02*
-*Updated by: /gsd:execute-phase 5 — Plan 05-02 complete (approveScore/overrideScore Server Actions, review queue with Client Islands, EvalTrend chart, evaluation overview page, nav link)*
+*Updated by: /gsd:execute-phase 5 -- Plan 05-03 complete (alert tables, check_alert_rules() PL/pgSQL, HMAC webhook dispatch, alert UI, seed data)*
