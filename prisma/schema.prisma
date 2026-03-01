@@ -180,6 +180,121 @@ model PromptVersion {
   @@map("prompt_versions")
 }
 
+// ----- A/B TESTING -----
+// Analysis constraint H8: Use simple accumulator columns (latency_sum, latency_sum_sq,
+// latency_n) with SELECT ... FOR UPDATE row lock. NOT Welford's algorithm (race condition
+// under concurrent SQL writes makes Welford's latency_mean/latency_m2 approach unsafe).
+//
+// Analysis constraint H9: eval columns are nullable — Phase 5 populates them.
+// analysis constraint M9: use overall_score (not final_score) for A/B eval metrics.
+// Analysis constraint M11: Use FNV-1a for traffic splitting (not Math.random()).
+// Analysis constraint H6: created_by references profiles(id), not auth.users(id).
+
+model Experiment {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name             String
+  description      String?
+  status           String    @default("draft")
+  // status values: 'draft' | 'running' | 'stopped' | 'completed'
+  hypothesis       String?
+  primaryMetric    String    @default("error_rate") @map("primary_metric")
+  // primaryMetric: 'error_rate' | 'avg_latency_ms' | 'avg_cost_usd' | 'avg_eval_score'
+  mde              Float     // minimum detectable effect (in metric units)
+  mdeUnit          String    @default("absolute") @map("mde_unit") // 'absolute' | 'relative'
+  alpha            Float     @default(0.05)   // Type I error rate
+  beta             Float     @default(0.20)   // Type II error rate
+  maxSamples       Int       @default(5000) @map("max_samples")  // SPRT truncation guard
+  minSamples       Int       @default(200)  @map("min_samples")  // minimum sample guard
+  startedAt        DateTime? @map("started_at") @db.Timestamptz
+  stoppedAt        DateTime? @map("stopped_at") @db.Timestamptz
+  winnerVariantId  String?   @map("winner_variant_id") @db.Uuid
+  createdBy        String    @map("created_by") @db.Uuid  // FK to profiles(id)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  variants         ExperimentVariant[] @relation("ExperimentVariants")
+  metrics          VariantMetric[]
+  sprtHistory      SprtHistory[]
+
+  @@index([status, startedAt])
+  @@map("experiments")
+}
+
+model ExperimentVariant {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  experimentId     String   @map("experiment_id") @db.Uuid
+  name             String   // 'control' | 'treatment' | 'variant_c'
+  promptVersionId  String?  @map("prompt_version_id") @db.Uuid  // FK to prompt_versions(id) — nullable for model-only tests
+  modelOverride    String?  @map("model_override")   // override model for this variant
+  trafficWeight    Float    @default(0.5) @map("traffic_weight")  // must sum to 1.0 across variants
+  isControl        Boolean  @default(false) @map("is_control")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  experiment       Experiment @relation("ExperimentVariants", fields: [experimentId], references: [id], onDelete: Cascade)
+  metrics          VariantMetric?
+
+  @@index([experimentId])
+  @@map("experiment_variants")
+}
+
+// Running statistics per variant.
+// H8: Simple accumulator columns (sum + sum_sq + n) — safe for concurrent increments.
+// Compute mean and variance at READ time: mean = sum/n, variance = (sum_sq - n*mean^2)/(n-1)
+// H9: eval columns nullable — Phase 5 populates them after judge LLM evaluates the request.
+// M9: use overall_score (available immediately) for eval_score_sum.
+model VariantMetric {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  variantId      String   @unique @map("variant_id") @db.Uuid
+  experimentId   String   @map("experiment_id") @db.Uuid
+
+  // Request counts
+  requestCount   Int      @default(0) @map("request_count")
+  errorCount     Int      @default(0) @map("error_count")
+
+  // Latency accumulators (ms) — H8 pattern
+  latencyN       Int      @default(0) @map("latency_n")
+  latencySum     Float    @default(0) @map("latency_sum")
+  latencySumSq   Float    @default(0) @map("latency_sum_sq")
+
+  // Cost accumulators (USD)
+  costN          Int      @default(0) @map("cost_n")
+  costSum        Float    @default(0) @map("cost_sum")
+
+  // Eval score accumulators (0-1, from eval_scores.overall_score) — nullable until Phase 5
+  evalN          Int?     @map("eval_n")
+  evalScoreSum   Float?   @map("eval_score_sum")
+
+  // SPRT state — stored for the primary metric
+  sprtLlr        Float    @default(0) @map("sprt_llr")    // cumulative log-likelihood ratio
+  sprtDecision   String?  @map("sprt_decision")           // 'continue' | 'accept_h1' | 'accept_h0'
+  sprtCheckedAt  DateTime? @map("sprt_checked_at") @db.Timestamptz
+
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  variant        ExperimentVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  experiment     Experiment @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+
+  @@index([experimentId])
+  @@map("variant_metrics")
+}
+
+// SPRT history snapshots — one row per SPRT check (every ~10 new observations)
+// Used by the SPRTChart confidence trajectory visualization.
+model SprtHistory {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  experimentId   String   @map("experiment_id") @db.Uuid
+  sampleCount    Int      @map("sample_count")     // total observations at snapshot time
+  llr            Float                             // cumulative log-likelihood ratio
+  upperBoundary  Float    @map("upper_boundary")   // ≈ 2.773 for α=0.05
+  lowerBoundary  Float    @map("lower_boundary")   // ≈ -1.558 for β=0.20
+  recordedAt     DateTime @default(now()) @map("recorded_at") @db.Timestamptz
+
+  experiment     Experiment @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+
+  @@index([experimentId, recordedAt])
+  @@map("sprt_history")
+}
+
 // ----- RATE LIMITING -----
 // Token bucket state per API key bucket (one row per bucket type per key).
 // Bucket ID format: "apikey:{api_key_id}:rpm" | "apikey:{api_key_id}:tpm"
