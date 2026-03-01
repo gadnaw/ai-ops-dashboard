@@ -6,18 +6,28 @@
 
 ## Current Position
 
-**Status:** All phases planned — ready to execute
-**Phase:** Phase 1 — Foundation (not started)
-**Plan:** —
+**Status:** Phase 1 in progress — Plan 01-01 complete
+**Phase:** Phase 1 — Foundation (in progress)
+**Plan:** 01-01 complete, 01-02 next
 **Task:** —
+**Last activity:** 2026-03-01 — Completed 01-01 Scaffold (4/4 tasks)
 
 ## Progress
+
+```
+Phase 1 ██░░░ 1/3 plans complete
+Phase 2 ░░░░░ 0/4 plans complete
+Phase 3 ░░░░░ 0/3 plans complete
+Phase 4 ░░░░░ 0/3 plans complete
+Phase 5 ░░░░░ 0/3 plans complete
+Overall: 1/16 plans complete (6%)
+```
 
 ### Milestone Progress
 
 | Phase | Name | Status | Plans | Notes |
 |-------|------|--------|-------|-------|
-| 1 | Foundation | Planned | 3/3 | Scaffold, Auth+RBAC, DevOps — 13 tasks |
+| 1 | Foundation | In Progress | 3/3 | Scaffold done, Auth+RBAC + DevOps pending |
 | 2 | Working Demo | Planned | 4/4 | Data layer, Model router, Dashboard UI, Config+Seed — 24 tasks |
 | 3 | Prompt Management + Playground | Planned | 3/3 | Prompt service, Prompt UI, Playground — 7 tasks |
 | 4 | Reliability + Differentiators | Planned | 3/3 | Rate limiter, Degradation viz, A/B testing — 8 tasks |
@@ -25,13 +35,13 @@
 
 ### Current Phase Detail
 
-**Phase 1: Foundation** — Ready to execute.
+**Phase 1: Foundation** — Plan 01-01 complete.
 
 | Plan | Status | Tasks | Last Commit |
 |------|--------|-------|-------------|
-| 01-01 Scaffold | Ready | 4 | d1c5ecc |
-| 01-02 Auth+RBAC | Ready | 5 | d1c5ecc |
-| 01-03 DevOps | Ready | 4 | d1c5ecc |
+| 01-01 Scaffold | Complete | 4/4 | 97fe70b |
+| 01-02 Auth+RBAC | Ready | 5 | — |
+| 01-03 DevOps | Ready | 4 | — |
 
 ## Accumulated Decisions
 
@@ -50,6 +60,13 @@ Key architectural decisions locked at roadmap creation. These do NOT need re-eva
 - **Server-first rendering:** `"use client"` only on Recharts wrappers, filter dropdowns, and Realtime feed components — all phases
 - **Prototype mode active:** Demo-ready after Phase 2; Phases 3-5 complete the full feature set
 
+### New Decisions from 01-01
+
+- **Prisma 7 adapter pattern:** Prisma 7 removes `url`/`directUrl` from `schema.prisma`. Use `prisma.config.ts` with `defineConfig({ datasource: { url: DIRECT_URL } })` for migrations. Runtime uses `@prisma/adapter-pg` + `pg.Pool` with `DATABASE_URL` (pooled). ALL downstream plans must use `import { prisma } from '@/lib/db/prisma'` — no other PrismaClient instantiation.
+- **Next.js version:** Installed as Next.js 16.1.6 (latest). Full API compatibility with Next.js 15 maintained.
+- **Zod 4 URL validation:** `z.url()` (standalone) used in env.ts — more ergonomic than `z.string().url()` in Zod 4.
+- **Testing stack:** Vitest 4 + jsdom (NOT vitest-environment-jsdom which doesn't exist). @playwright/test 1.58.2.
+
 ## Blockers
 
 No current blockers.
@@ -67,7 +84,7 @@ No checkpoint files.
 See: `.planning/PROJECT.md` (updated 2026-03-01)
 
 **Core value:** Ship AI that works in production, not just in notebooks.
-**Current focus:** Phase 1 — Foundation (scaffold, CI/CD, auth, dual connection strings, pre-commit security)
+**Current focus:** Phase 1 — Plan 01-02 Auth+RBAC is next
 
 ## Configuration
 
@@ -77,12 +94,25 @@ See: `.planning/PROJECT.md` (updated 2026-03-01)
 - **Workflow:** Sequential (research-all → analyze-research → plan-all)
 - **Prototype Mode:** Active (demo-ready after Phase 2)
 
+## Session Continuity
+
+**Last session:** 2026-03-01 14:45 UTC
+**Stopped at:** Completed 01-01-PLAN.md (4/4 tasks)
+**Resume file:** None — continue with Plan 01-02
+
 ## Next Steps
 
-**Recommended:** `/gsd:execute-phase 1`
-**Reason:** All 5 phases planned with 16 plans and ~61 tasks. Cross-phase constraints from ANALYSIS-REPORT.md incorporated into all plans. Begin execution with Phase 1 Foundation.
+**Recommended:** Execute Plan 01-02 (Auth+RBAC)
+**Command:** `/gsd:execute-phase 1` (will pick up 01-02 next)
+
+**Key handoff context for Plan 01-02:**
+- PrismaClient singleton: `import { prisma } from '@/lib/db/prisma'`
+- Prisma 7 runtime: @prisma/adapter-pg with pg.Pool (DATABASE_URL pooled)
+- Prisma 7 migrations: `pnpm db:migrate:dev` uses DIRECT_URL from prisma.config.ts
+- Route groups ready: `(auth)` for login/signup, `(dashboard)` for protected pages
+- Testing: `pnpm test:run` runs Vitest (2 tests passing)
 
 ---
 
 *Last updated: 2026-03-01*
-*Updated by: /gsd:plan-all (all phases planned)*
+*Updated by: /gsd:execute-phase — Plan 01-01 complete*
