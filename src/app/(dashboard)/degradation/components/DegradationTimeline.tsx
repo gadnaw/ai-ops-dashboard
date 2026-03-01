@@ -1,8 +1,8 @@
 "use client";
 
 import { BarChart, Bar, XAxis, YAxis, Cell, Tooltip, ResponsiveContainer } from "recharts";
-import type { DegradationChain } from "@/lib/degradation/queries";
-import { STAGE_CONFIG } from "@/lib/degradation/queries";
+import type { DegradationChain } from "@/lib/degradation/constants";
+import { STAGE_CONFIG } from "@/lib/degradation/constants";
 
 interface TimelineRow {
   name: string; // label for y-axis (e.g. "Stage 1 — Queued")
