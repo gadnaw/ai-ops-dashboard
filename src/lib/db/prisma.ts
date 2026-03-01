@@ -8,27 +8,29 @@
 // CANONICAL IMPORT: import { prisma } from '@/lib/db/prisma'
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
-import pg from "pg";
+import { Pool } from "pg";
 
 // Build the pool lazily so module import doesn't crash in environments
 // where DATABASE_URL is not yet set (e.g., during type-check in CI).
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient | undefined;
+  pool: Pool | undefined;
+};
+
 function createPrismaClient(): PrismaClient {
-  const pool = new pg.Pool({
+  const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
+    max: 1, // connection_limit=1 for serverless (Pitfall 1)
   });
+
+  globalForPrisma.pool = pool;
+
   const adapter = new PrismaPg(pool);
   return new PrismaClient({
     adapter,
-    log:
-      process.env.NODE_ENV === "development"
-        ? ["query", "error", "warn"]
-        : ["error"],
+    log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
   });
 }
-
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined;
-};
 
 export const prisma = globalForPrisma.prisma ?? createPrismaClient();
 
