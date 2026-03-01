@@ -6,21 +6,21 @@
 
 ## Current Position
 
-**Status:** Phase 2 verified — 5/5 must-haves confirmed (3 gaps fixed)
-**Phase:** Phase 2 — Working Demo (verified)
-**Plan:** All 4 plans complete + verification passed
+**Status:** Phase 3 in progress — 1/3 plans complete
+**Phase:** Phase 3 — Prompt Management + Playground
+**Plan:** 03-01 complete (Prompt Manager Service)
 **Task:** —
-**Last activity:** 2026-03-01 — Phase 2 verified after gap fixes (FilterBar cookie, Realtime fallback events, chart type errors)
+**Last activity:** 2026-03-01 — Completed 03-01 (prompt schema, triggers, FK, queries, actions, REST API, version-aware chat)
 
 ## Progress
 
 ```
 Phase 1 █████ 3/3 plans complete
 Phase 2 █████ 4/4 plans complete
-Phase 3 ░░░░░ 0/3 plans complete
+Phase 3 █░░░░ 1/3 plans complete
 Phase 4 ░░░░░ 0/3 plans complete
 Phase 5 ░░░░░ 0/3 plans complete
-Overall: 7/16 plans complete (44%)
+Overall: 8/16 plans complete (50%)
 ```
 
 ### Milestone Progress
@@ -29,7 +29,7 @@ Overall: 7/16 plans complete (44%)
 |-------|------|--------|-------|-------|
 | 1 | Foundation | Complete | 3/3 | Scaffold, Auth+RBAC, DevOps all done |
 | 2 | Working Demo | Complete | 4/4 | All plans complete — data layer, model router, dashboard UI, config UI + seed |
-| 3 | Prompt Management + Playground | Planned | 3/3 | Prompt service, Prompt UI, Playground — 7 tasks |
+| 3 | Prompt Management + Playground | In Progress | 1/3 | Prompt service done; Prompt UI, Playground remaining |
 | 4 | Reliability + Differentiators | Planned | 3/3 | Rate limiter, Degradation viz, A/B testing — 8 tasks |
 | 5 | Evaluation + Alerts | Planned | 3/3 | Eval service, Human review, Alert engine — 9 tasks |
 
@@ -51,6 +51,14 @@ Overall: 7/16 plans complete (44%)
 | 02-02 Model Router | Complete | 3/3 | 75ab9dc |
 | 02-03 Dashboard UI | Complete | 3/3 | 10d4ea9 |
 | 02-04 Config+Seed | Complete | 3/3 | afaf45f |
+
+**Phase 3: Prompt Management + Playground** — In Progress (1/3 plans).
+
+| Plan | Status | Tasks | Last Commit |
+|------|--------|-------|-------------|
+| 03-01 Prompt Manager Service | Complete | 3/3 | db3c604 |
+| 03-02 Prompt UI | Pending | 0/3 | — |
+| 03-03 Playground | Pending | 0/3 | — |
 
 ## Accumulated Decisions
 
@@ -125,6 +133,26 @@ Key architectural decisions locked at roadmap creation. These do NOT need re-eva
 - **ESLint relaxed rules for prisma/:** Added `"prisma/**"` to the eslint.config.mjs relaxed-rules override (`no-console: off`). Seed scripts need console.log for progress reporting; `--max-warnings=0` caused pre-commit failures without this.
 - **'error' in result for discriminated union narrowing:** Server Actions return `{ success: true } | { error: string }`. Use `'error' in result` (not `result.error`) to correctly narrow TypeScript union and avoid false negatives on empty-string errors.
 
+### Decisions from 03-01
+
+- **PromptTemplate/PromptVersion use UUID PKs:** `request_logs.prompt_version_id` is type UUID. Using TEXT (cuid) for version IDs would cause FK type mismatch. Both models use `@default(dbgenerated("gen_random_uuid()")) @db.Uuid`.
+- **activeVersionId has @unique constraint:** Prisma 7 requires @unique on the FK side of a one-to-one relation. Each version can only be active for one template at a time — semantically correct.
+- **Migration applied via Node.js pg client:** `prisma migrate dev` fails with "Tenant or user not found" on pooler URL. Direct Supabase host (`db.ksrmiaigyezhvuktimqt.supabase.co:5432`) with plain `postgres` username works. No `_prisma_migrations` table — track migrations in git.
+- **lint-staged --no-stash flag:** lint-staged's git stash backup fails with many untracked planning files. `--no-stash` flag in pre-commit hook skips backup and allows commit to proceed.
+- **createPromptVersion sets version: 0 as placeholder:** PostgreSQL BEFORE INSERT trigger `assign_prompt_version` overwrites with the correct per-template incremented value. Prisma requires a non-null value at the app layer.
+- **Version ID type fix for modelConfig:** Prisma's Json field requires `Prisma.InputJsonValue`, not `Record<string, unknown>`. Use `import type { Prisma }` and cast at call site.
+
+## Last Deploy
+
+- Status: DEPLOYED
+- Platform: Vercel
+- Environment: Production
+- URL: https://c1-ai-observability-platform.vercel.app
+- Timestamp: 2026-03-01T12:22:00Z
+- Risk score: 33/100 (MEDIUM)
+- Git SHA: ae3c024
+- Monitoring: ACTIVE (24h health check window)
+
 ## Blockers
 
 No current blockers.
@@ -155,13 +183,13 @@ See: `.planning/PROJECT.md` (updated 2026-03-01)
 ## Session Continuity
 
 **Last session:** 2026-03-01
-**Stopped at:** Phase 2 verified — all 5 must-haves confirmed after gap fixes
-**Resume file:** None — begin Phase 3
+**Stopped at:** Phase 3 Plan 03-01 complete — prompt schema, triggers, queries, actions, REST API, version-aware chat
+**Resume file:** None — continue Phase 3
 
 ## Next Steps
 
-**Recommended:** Execute Phase 3 Plan 03-01 (Prompt Management)
-**Command:** `/gsd:execute-phase 3` (plan 03-01)
+**Recommended:** Execute Phase 3 Plan 03-02 (Prompt UI)
+**Command:** `/gsd:execute-phase 3` (plan 03-02)
 
 **Key handoff context for Phase 3:**
 - Config UI: `import { updateEndpointConfig } from '@/app/(dashboard)/config/actions'`
@@ -190,5 +218,15 @@ See: `.planning/PROJECT.md` (updated 2026-03-01)
 
 ---
 
+**Key additions from 03-01 for 03-02/03-03:**
+- Prompt queries: `import { getTemplates, getTemplateWithVersions, getVersion, getTwoVersionsForDiff } from '@/lib/prompts/queries'`
+- Prompt actions: `import { createPromptTemplate, createPromptVersion, rollbackToVersion } from '@/lib/prompts/actions'`
+- Variable utils: `import { extractVariables, interpolateVariables } from '@/lib/prompts/variables'`
+- REST endpoints: GET/POST /api/v1/prompts, POST /api/v1/prompts/[id]/rollback
+- Chat extension: POST /api/v1/chat accepts promptVersionId + modelId for playground routing
+- Migration auth: Use postgres:REDACTED@db.ksrmiaigyezhvuktimqt.supabase.co:5432 for direct SQL
+
+---
+
 *Last updated: 2026-03-01*
-*Updated by: /gsd:execute-phase 2 — Phase 2 verified (5/5 must-haves, 3 gaps fixed)*
+*Updated by: /gsd:execute-phase 3 — Plan 03-01 complete (prompt schema, triggers, queries, actions, REST API, version-aware chat)*
