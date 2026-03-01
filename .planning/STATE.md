@@ -6,11 +6,11 @@
 
 ## Current Position
 
-**Status:** Phase 4 in progress — 2/3 plans done
+**Status:** Phase 4 complete — 3/3 plans done
 **Phase:** Phase 4 — Reliability + Differentiators
-**Plan:** 04-02 complete (Degradation Visualization)
+**Plan:** 04-03 complete (A/B Testing)
 **Task:** —
-**Last activity:** 2026-03-01 — Completed 04-02 (degradation query layer, REST API, Gantt timeline chart, event list, stage detail panel, /dashboard/degradation page)
+**Last activity:** 2026-03-01 — Completed 04-03 (experiments/experiment_variants/variant_metrics/sprt_history schema, FNV-1a hash, SPRT engine, accumulator metrics with SELECT FOR UPDATE, experiment runner, REST API, SPRT chart + metrics table + controls UI)
 
 ## Progress
 
@@ -18,9 +18,9 @@
 Phase 1 █████ 3/3 plans complete
 Phase 2 █████ 4/4 plans complete
 Phase 3 █████ 3/3 plans complete
-Phase 4 ███░░ 2/3 plans complete
+Phase 4 █████ 3/3 plans complete
 Phase 5 ░░░░░ 0/3 plans complete
-Overall: 12/16 plans complete (75%)
+Overall: 13/16 plans complete (81%)
 ```
 
 ### Milestone Progress
@@ -30,7 +30,7 @@ Overall: 12/16 plans complete (75%)
 | 1 | Foundation | Complete | 3/3 | Scaffold, Auth+RBAC, DevOps all done |
 | 2 | Working Demo | Complete | 4/4 | All plans complete — data layer, model router, dashboard UI, config UI + seed |
 | 3 | Prompt Management + Playground | Complete | 3/3 | Prompt service + UI + Playground all done |
-| 4 | Reliability + Differentiators | In Progress | 1/3 | 04-01 Rate Limiter complete |
+| 4 | Reliability + Differentiators | Complete | 3/3 | Rate Limiter, Degradation Viz, A/B Testing all done |
 | 5 | Evaluation + Alerts | Planned | 3/3 | Eval service, Human review, Alert engine — 9 tasks |
 
 ### Current Phase Detail
@@ -60,13 +60,13 @@ Overall: 12/16 plans complete (75%)
 | 03-02 Prompt UI | Complete | 2/2 | ca73379 |
 | 03-03 Playground | Complete | 2/2 | ab243cc |
 
-**Phase 4: Reliability + Differentiators** — In Progress (1/3 plans done).
+**Phase 4: Reliability + Differentiators** — Complete (3/3 plans done).
 
 | Plan | Status | Tasks | Last Commit |
 |------|--------|-------|-------------|
 | 04-01 Rate Limiter | Complete | 3/3 | 7516885 |
 | 04-02 Degradation Visualization | Complete | 2/2 | 9a0e260 |
-| 04-03 A/B Testing | Planned | — | — |
+| 04-03 A/B Testing | Complete | 3/3 | d2046fc |
 
 ## Accumulated Decisions
 
@@ -302,5 +302,22 @@ See: `.planning/PROJECT.md` (updated 2026-03-01)
 
 ---
 
+---
+
+**Key additions from 04-03 for Phase 5:**
+- A/B service: `import { getActiveExperiment, runExperiment } from '@/lib/ab-testing/experiment-runner'`
+- SPRT engine: `import { initSPRT, checkSPRT, updateSPRTProportions, computeSequentialZTest } from '@/lib/ab-testing/sprt'`
+- Metrics: `import { computeVariantStats, recordVariantObservation } from '@/lib/ab-testing/metrics'`
+- Hash: `import { fnv1a32, assignVariant } from '@/lib/ab-testing/hash'`
+- REST endpoints: GET/POST /api/v1/experiments, GET/PATCH /api/v1/experiments/[id], GET /api/v1/experiments/[id]/metrics
+- UI: /experiments (list), /experiments/[id] (SPRT chart + variant metrics table + controls)
+- Nav: Experiments link added to nav.tsx at `/experiments`
+- Phase 5 eval hook: `prisma.variantMetric.update({ data: { evalN: { increment: 1 }, evalScoreSum: { increment: overallScore } } })` after judge evaluation
+- SPRT boundaries locked: upper ≈ 2.773, lower ≈ -1.558 (α=0.05, β=0.20)
+- Experiment cache invalidated on auto-stop (cacheExpiry = 0)
+- experiment_variants.prompt_version_id is UUID type (FK to prompt_versions.id)
+
+---
+
 *Last updated: 2026-03-01*
-*Updated by: /gsd:execute-phase 3 — Plan 03-03 complete (PlaygroundForm/useCompletion, TokenCounter, ModelSelector, PromptVersionPicker, /playground page, nav links)*
+*Updated by: /gsd:execute-phase 4 — Plan 04-03 complete (A/B testing schema, FNV-1a hash, SPRT engine, accumulator metrics, experiment runner, REST API, SPRT chart + metrics UI)*
