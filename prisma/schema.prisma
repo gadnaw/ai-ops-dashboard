@@ -437,3 +437,56 @@ model EvaluationScore {
   @@map("evaluation_scores")
 }
 
+// ----- ALERTING (Phase 5) -----
+// Alert rules define threshold conditions checked every minute by pg_cron.
+// check_alert_rules() PL/pgSQL function scans request_logs and evaluation_scores
+// directly (documented exception to mat view rule per ANALYSIS-REPORT M7).
+// Cooldown enforced at SQL level via UPDATE last_fired_at BEFORE yielding results.
+
+model AlertRule {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name            String
+  // cost_per_window | p95_latency_ms | error_rate_pct | eval_score_avg
+  metric          String
+  // absolute | relative_daily_avg
+  thresholdType   String    @default("absolute") @map("threshold_type")
+  thresholdValue  Decimal   @map("threshold_value") @db.Decimal(12, 4)
+  // Sliding window in minutes: 5, 15, or 60
+  windowMinutes   Int       @default(15) @map("window_minutes")
+  // Cooldown in minutes: after firing, don't re-fire for this long
+  cooldownMinutes Int       @default(60) @map("cooldown_minutes")
+  webhookUrl      String    @map("webhook_url")
+  // Optional HMAC signing secret for webhook verification
+  webhookSecret   String?   @map("webhook_secret")
+  isActive        Boolean   @default(true) @map("is_active")
+  lastFiredAt     DateTime? @map("last_fired_at") @db.Timestamptz
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  history         AlertHistory[]
+
+  @@map("alert_rules")
+}
+
+model AlertHistory {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ruleId             String    @map("rule_id") @db.Uuid
+  triggeredAt        DateTime  @default(now()) @map("triggered_at") @db.Timestamptz
+  metricValue        Decimal   @map("metric_value") @db.Decimal(12, 4)
+  thresholdValue     Decimal   @map("threshold_value") @db.Decimal(12, 4)
+  // fired | acknowledged | resolved
+  status             String    @default("fired")
+  acknowledgedAt     DateTime? @map("acknowledged_at") @db.Timestamptz
+  resolvedAt         DateTime? @map("resolved_at") @db.Timestamptz
+  resolverNote       String?   @map("resolver_note")
+  webhookStatusCode  Int?      @map("webhook_status_code")
+  webhookResponse    String?   @map("webhook_response")
+  webhookAttempts    Int       @default(0) @map("webhook_attempts")
+
+  rule               AlertRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+
+  @@index([ruleId, triggeredAt(sort: Desc)], name: "idx_alert_history_rule")
+  @@index([status], name: "idx_alert_history_status")
+  @@map("alert_history")
+}
+
