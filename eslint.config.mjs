@@ -12,12 +12,7 @@ const eslintConfig = defineConfig([
   prettierConfig,
 
   // Override default ignores of eslint-config-next.
-  globalIgnores([
-    ".next/**",
-    "out/**",
-    "build/**",
-    "next-env.d.ts",
-  ]),
+  globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts"]),
 
   // Custom rules for this project
   {
@@ -39,9 +34,9 @@ const eslintConfig = defineConfig([
     },
   },
 
-  // Relax rules for config files and test utilities
+  // Relax rules for config files, test utilities, and seed scripts
   {
-    files: ["*.config.{js,mjs,ts}", "src/test/**", "e2e/**"],
+    files: ["*.config.{js,mjs,ts}", "src/test/**", "e2e/**", "prisma/**"],
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
       "no-console": "off",
