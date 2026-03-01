@@ -26,6 +26,9 @@ export async function Nav() {
             <Link href="/experiments" className="text-sm text-gray-500 hover:text-gray-900">
               Experiments
             </Link>
+            <Link href="/evaluation" className="text-sm text-gray-500 hover:text-gray-900">
+              Evaluation
+            </Link>
             {session && (
               <Link href="/config" className="text-sm text-gray-500 hover:text-gray-900">
                 Config
