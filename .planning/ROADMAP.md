@@ -23,7 +23,7 @@ This roadmap delivers a production-grade AI operations dashboard in five phases,
 
 - [x] **Phase 1: Foundation** — Clean scaffold with deployment pipeline and auth skeleton
 - [x] **Phase 2: Working Demo** — Core value deployable to shareable URL with seed data
-- [ ] **Phase 3: Prompt Management + Playground** — Prompt versioning, diff view, rollback, and streaming playground
+- [x] **Phase 3: Prompt Management + Playground** — Prompt versioning, diff view, rollback, and streaming playground
 - [ ] **Phase 4: Reliability + Differentiators** — Graceful degradation + A/B testing with statistical significance
 - [ ] **Phase 5: Evaluation + Alerts** — LLM-as-judge pipeline, human review queue, and anomaly alerting
 
@@ -130,9 +130,9 @@ Plans:
 **Plans:** 3 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — Prompt manager service: `prompt_templates` + `prompt_versions` tables with immutable snapshot trigger, `variables` JSONB extraction, per-template auto-increment via PostgreSQL trigger + advisory lock, FK constraint on `request_logs.prompt_version_id`, rollback Server Action + REST API, version-aware `/api/v1/chat` route
-- [ ] 03-02-PLAN.md — Prompt UI: version list Server Component with `useOptimistic` rollback (VersionList), side-by-side character-level diff (DiffViewer + jsdiff), CodeMirror 6 editor with `{{variable}}` highlighting (PromptEditor, SSR-safe via dynamic import), create/rollback forms, prompt version filter on dashboard @requests slot
-- [ ] 03-03-PLAN.md — Playground: streaming UI via `useCompletion` (single-turn, NOT useChat), live token counter via `gpt-tokenizer` (pure JS), model/prompt/parameter selectors, variable interpolation before send, requests logged through production pipeline with `prompt_version_id`, deep-link from `/prompts/[slug]` via `?promptVersionId=ID`
+- [x] 03-01-PLAN.md — Prompt manager service: `prompt_templates` + `prompt_versions` tables with immutable snapshot trigger, `variables` JSONB extraction, per-template auto-increment via PostgreSQL trigger + advisory lock, FK constraint on `request_logs.prompt_version_id`, rollback Server Action + REST API, version-aware `/api/v1/chat` route
+- [x] 03-02-PLAN.md — Prompt UI: version list Server Component with `useOptimistic` rollback (VersionList), side-by-side character-level diff (DiffViewer + jsdiff), CodeMirror 6 editor with `{{variable}}` highlighting (PromptEditor, SSR-safe via dynamic import), create/rollback forms, prompt version filter on dashboard @requests slot
+- [x] 03-03-PLAN.md — Playground: streaming UI via `useCompletion` (single-turn, NOT useChat), live token counter via `gpt-tokenizer` (pure JS), model/prompt/parameter selectors, variable interpolation before send, requests logged through production pipeline with `prompt_version_id`, deep-link from `/prompts/[slug]` via `?promptVersionId=ID`
 
 ---
 
@@ -220,8 +220,8 @@ These requirements are documented but NOT mapped to any phase in this milestone.
 | OBS-01 | Per-request cost and latency tracking with breakdown by model/prompt/endpoint | Phase 2 | Pending |
 | OBS-02 | Real-time dashboard (cost trends, latency p50/p95/p99, error rates) via Recharts | Phase 2 | Pending |
 | CONFIG-01 | Model configuration UI for temperature, max tokens, system prompts | Phase 2 | Pending |
-| PROMPT-01 | Prompt version control with named versions, diff view, rollback | Phase 3 | Pending |
-| DX-01 | Request playground with streaming and live token counter | Phase 3 | Pending |
+| PROMPT-01 | Prompt version control with named versions, diff view, rollback | Phase 3 | Complete |
+| DX-01 | Request playground with streaming and live token counter | Phase 3 | Complete |
 | REL-01 | Token-bucket rate limiting with 4-stage graceful degradation | Phase 4 | Pending |
 | PROMPT-02 | A/B testing with statistical significance and auto-stop at 95% confidence | Phase 4 | Pending |
 | EVAL-01 | Evaluation pipeline with judge LLM + human review queue + rubrics | Phase 5 | Pending |
@@ -242,7 +242,7 @@ These requirements are documented but NOT mapped to any phase in this milestone.
 |-------|------|----------------|--------|-----------|
 | 1 | Foundation | 3/3 | Complete | 2026-03-01 |
 | 2 | Working Demo | 4/4 | Complete | 2026-03-01 |
-| 3 | Prompt Management + Playground | 0/3 | Planned | — |
+| 3 | Prompt Management + Playground | 3/3 | Complete | 2026-03-01 |
 | 4 | Reliability + Differentiators | 0/3 | Planned | — |
 | 5 | Evaluation + Alerts | 0/3 | Planned | — |
 
@@ -271,6 +271,6 @@ These are confirmed decisions from research that constrain all phases. Do not re
 
 *Roadmap version: 1.3*
 *Created: 2026-03-01*
-*Updated: 2026-03-01 (Phase 2 Working Demo complete)*
+*Updated: 2026-03-01 (Phase 3 Prompt Management + Playground complete)*
 *Milestone: Portfolio Demo*
 *Coverage: 12/12 active requirements mapped, 3 deferred*

@@ -100,8 +100,8 @@
 | OBS-01 | User spec | Complete | Phase 2 | Working Demo — fire-and-forget logging via after(), rate card table |
 | OBS-02 | User spec | Complete | Phase 2 | Working Demo — materialized views, Recharts, dashboard_events Realtime |
 | CONFIG-01 | User spec | Complete | Phase 2 | Working Demo — model config UI per endpoint |
-| PROMPT-01 | User spec | Active | Phase 3 | Prompt Management — immutable snapshots, diff view, rollback |
-| DX-01 | User spec | Active | Phase 3 | Prompt Management — streaming playground through production pipeline |
+| PROMPT-01 | User spec | Complete | Phase 3 | Prompt Management — immutable snapshots, diff view, rollback |
+| DX-01 | User spec | Complete | Phase 3 | Prompt Management — streaming playground through production pipeline |
 | REL-01 | User spec | Active | Phase 4 | Reliability — PostgreSQL token bucket, 4-stage degradation, timeline viz |
 | PROMPT-02 | User spec | Active | Phase 4 | Differentiators — SPRT auto-stop, per-variant metrics, promote workflow |
 | EVAL-01 | User spec | Active | Phase 5 | Evaluation — judge LLM, scoring rubrics, human review queue |
