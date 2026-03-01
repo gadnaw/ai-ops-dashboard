@@ -6,6 +6,7 @@ import { MODEL_PROVIDERS } from "@/lib/model-router/types";
 import { getVersion } from "@/lib/prompts/queries";
 import { prisma } from "@/lib/db/prisma";
 import { getRateLimiter, runDegradationChain, setCachedResponse } from "@/lib/rate-limiter";
+import { getActiveExperiment, runExperiment } from "@/lib/ab-testing/experiment-runner";
 import type { NextRequest } from "next/server";
 
 export const runtime = "nodejs"; // after() requires Node.js runtime (not Edge)
@@ -254,6 +255,27 @@ export async function POST(request: NextRequest) {
       } catch (cacheErr) {
         // Cache write failure must never propagate
         console.error("[after] response_cache write failed (non-fatal):", cacheErr);
+      }
+
+      // Phase 4: A/B experiment metrics — record observation if request used a prompt version
+      try {
+        if (resolvedPromptVersionId) {
+          const experiment = await getActiveExperiment(resolvedPromptVersionId);
+          if (experiment) {
+            const durationMs = Date.now() - startTime;
+            const costUsd = Number(
+              (
+                await prisma.requestLog.findFirst({
+                  where: { id: requestId },
+                  select: { costUsd: true },
+                })
+              )?.costUsd ?? 0
+            );
+            await runExperiment(experiment.id, requestId, durationMs, costUsd, false);
+          }
+        }
+      } catch (abErr) {
+        console.error("[after] A/B experiment recording failed (non-fatal):", abErr);
       }
     } catch (logError) {
       // Logging failure must NEVER propagate — response already sent

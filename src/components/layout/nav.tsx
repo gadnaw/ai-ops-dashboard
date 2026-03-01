@@ -23,10 +23,7 @@ export async function Nav() {
             <Link href="/degradation" className="text-sm text-gray-500 hover:text-gray-900">
               Degradation
             </Link>
-            <Link
-              href="/dashboard/experiments"
-              className="text-sm text-gray-500 hover:text-gray-900"
-            >
+            <Link href="/experiments" className="text-sm text-gray-500 hover:text-gray-900">
               Experiments
             </Link>
             {session && (
