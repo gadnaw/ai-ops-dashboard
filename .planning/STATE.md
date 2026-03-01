@@ -6,11 +6,11 @@
 
 ## Current Position
 
-**Status:** Phase 5 in progress — 1/3 plans done
+**Status:** Phase 5 in progress — 2/3 plans done
 **Phase:** Phase 5 — Evaluation + Alerts
-**Plan:** 05-01 complete (Evaluation Service)
-**Task:** —
-**Last activity:** 2026-03-02 — Completed 05-01 (evaluation_rubrics/jobs/scores schema, GPT-4o judge service, FNV-1a sampling trigger, FOR UPDATE SKIP LOCKED job processor, MSW Responses API mocks, Vitest tests)
+**Plan:** 05-02 complete (Human Review Queue)
+**Task:** --
+**Last activity:** 2026-03-02 — Completed 05-02 (approveScore/overrideScore Server Actions, review queue page with Client Islands, EvalTrend chart, evaluation overview page, nav link)
 
 ## Progress
 
@@ -19,8 +19,8 @@ Phase 1 █████ 3/3 plans complete
 Phase 2 █████ 4/4 plans complete
 Phase 3 █████ 3/3 plans complete
 Phase 4 █████ 3/3 plans complete
-Phase 5 █░░░░ 1/3 plans complete
-Overall: 14/16 plans complete (87%)
+Phase 5 ██░░░ 2/3 plans complete
+Overall: 15/16 plans complete (93%)
 ```
 
 ### Milestone Progress
@@ -31,7 +31,7 @@ Overall: 14/16 plans complete (87%)
 | 2 | Working Demo | Complete | 4/4 | All plans complete — data layer, model router, dashboard UI, config UI + seed |
 | 3 | Prompt Management + Playground | Complete | 3/3 | Prompt service + UI + Playground all done |
 | 4 | Reliability + Differentiators | Complete | 3/3 | Rate Limiter, Degradation Viz, A/B Testing all done |
-| 5 | Evaluation + Alerts | In Progress | 1/3 | Eval service done; Human review + Alert engine remain |
+| 5 | Evaluation + Alerts | In Progress | 2/3 | Eval service + Human review done; Alert engine remains |
 
 ### Current Phase Detail
 
@@ -68,13 +68,13 @@ Overall: 14/16 plans complete (87%)
 | 04-02 Degradation Visualization | Complete | 2/2 | 9a0e260 |
 | 04-03 A/B Testing | Complete | 3/3 | d2046fc |
 
-**Phase 5: Evaluation + Alerts** — In progress (1/3 plans done).
+**Phase 5: Evaluation + Alerts** — In progress (2/3 plans done).
 
 | Plan | Status | Tasks | Last Commit |
 |------|--------|-------|-------------|
 | 05-01 Evaluation Service | Complete | 3/3 | f99a990 |
-| 05-02 Human Review | Planned | — | — |
-| 05-03 Alert Engine | Planned | — | — |
+| 05-02 Human Review | Complete | 3/3 | febdab2 |
+| 05-03 Alert Engine | Planned | -- | -- |
 
 ## Accumulated Decisions
 
@@ -183,6 +183,13 @@ Key architectural decisions locked at roadmap creation. These do NOT need re-eva
 - **30-second chain grouping window:** Events within 30s for the same API key are grouped into one DegradationChain. Heuristic for demo — production would use a request_id FK column on rate_limit_events.
 - **Recharts Tooltip formatter types:** Use `(value: unknown, name: unknown)` signature for Tooltip formatter in Recharts. The `name` param is `string | undefined` and overloads are strict. Avoid labelFormatter in strict TypeScript mode.
 
+### Decisions from 05-02
+
+- **Raw SQL for evaluation-request joins:** EvaluationScore has no Prisma relation to RequestLog (partitioned table, no FK constraints). All queries needing request metadata use `prisma.$queryRaw` with `LEFT JOIN request_logs r ON e.request_id = r.id`. Same pattern as rate_limit_events.
+- **Server Action try/catch return pattern:** approveScore/overrideScore return `{ success: true } | { error: string }`. Client uses `'error' in result` discriminated union. Follows 02-04 pattern.
+- **Per-feature lazy.tsx for EvalTrend:** `src/components/evaluation/lazy.tsx` exports `EvalTrendLazy` with `ssr: false`. Server Component page imports from lazy.tsx. Follows 04-02 per-feature pattern.
+- **Recharts Tooltip formatter: `(v: number | undefined)`:** Matches established pattern from CostTrendChart/LatencyChart. Avoid `(value: unknown, name: unknown)` signature which causes type errors.
+
 ## Last Deploy
 
 - Status: DEPLOYED
@@ -211,7 +218,7 @@ No checkpoint files.
 See: `.planning/PROJECT.md` (updated 2026-03-01)
 
 **Core value:** Ship AI that works in production, not just in notebooks.
-**Current focus:** Phase 4 Reliability + Differentiators — Phase 3 complete (all 3 plans done)
+**Current focus:** Phase 5 Evaluation + Alerts — 2/3 plans done (Eval service + Human review complete)
 
 ## Configuration
 
@@ -224,12 +231,12 @@ See: `.planning/PROJECT.md` (updated 2026-03-01)
 ## Session Continuity
 
 **Last session:** 2026-03-02
-**Stopped at:** Phase 5 Plan 05-01 complete — evaluation service schema, judge LLM service, FNV-1a trigger, job processor, MSW mocks, Vitest tests
-**Resume file:** None — continue Phase 5 with 05-02 Human Review
+**Stopped at:** Phase 5 Plan 05-02 complete — approveScore/overrideScore Server Actions, review queue page, EvalTrend chart, evaluation overview page, nav link
+**Resume file:** None — continue Phase 5 with 05-03 Alert Engine
 
 ## Next Steps
 
-**Recommended:** Execute Phase 5 Plan 05-02 (Human Review)
+**Recommended:** Execute Phase 5 Plan 05-03 (Alert Engine)
 **Command:** `/gsd:execute-phase 5`
 
 **Key additions from 04-02 for 04-03:**
@@ -327,6 +334,18 @@ See: `.planning/PROJECT.md` (updated 2026-03-01)
 
 ---
 
+**Key additions from 05-02 for 05-03:**
+- Server Actions: `import { approveScore, overrideScore } from '@/app/actions/evaluation'`
+- REST: `GET /api/v1/evaluation/scores?page=1&pageSize=50&days=30` — paginated scores with request metadata
+- Components: ScoreDisplay, QueueStats, ReviewInteractionPanel (Client Island), EvalTrend (via lazy.tsx)
+- Routes: /evaluation (overview), /evaluation/review (queue)
+- Nav: Evaluation link added to nav.tsx at `/evaluation`
+- Pattern: raw SQL with LEFT JOIN for evaluation-request queries (no Prisma relation to partitioned request_logs)
+- Pattern: `(v: number | undefined) => [formatted, label]` for Recharts Tooltip formatter
+- Pattern: Server Action returns `{ success: true } | { error: string }`, client checks `'error' in result`
+
+---
+
 **Key additions from 05-01 for Phase 5 plans 02-03:**
 - Evaluator: `import { judgeRequest, safeJudgeRequest, maybeQueueEvaluation, buildRubricText } from '@/lib/evaluator'`
 - Schema: evaluation_rubrics, evaluation_jobs, evaluation_scores tables (migration 20260302000000)
@@ -343,4 +362,4 @@ See: `.planning/PROJECT.md` (updated 2026-03-01)
 ---
 
 *Last updated: 2026-03-02*
-*Updated by: /gsd:execute-phase 5 — Plan 05-01 complete (evaluation_rubrics/jobs/scores schema, GPT-4o judge service, FNV-1a sampling trigger, FOR UPDATE SKIP LOCKED processor, MSW Responses API mocks, 25 passing tests)*
+*Updated by: /gsd:execute-phase 5 — Plan 05-02 complete (approveScore/overrideScore Server Actions, review queue with Client Islands, EvalTrend chart, evaluation overview page, nav link)*
