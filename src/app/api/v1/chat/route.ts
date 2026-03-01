@@ -4,6 +4,8 @@ import { logRequest } from "@/lib/logging/request-logger";
 import { getErrorCode, isRetryableError } from "@/lib/model-router/errors";
 import { MODEL_PROVIDERS } from "@/lib/model-router/types";
 import { getVersion } from "@/lib/prompts/queries";
+import { prisma } from "@/lib/db/prisma";
+import { getRateLimiter, runDegradationChain, setCachedResponse } from "@/lib/rate-limiter";
 import type { NextRequest } from "next/server";
 
 export const runtime = "nodejs"; // after() requires Node.js runtime (not Edge)
@@ -77,7 +79,90 @@ export async function POST(request: NextRequest) {
     };
   }
 
-  let usedModel = config.models[0] ?? "openai:gpt-4o";
+  // effectiveModelId: resolved primary model for this request (let — Stage 2 may override)
+  let effectiveModelId = config.models[0] ?? "openai:gpt-4o";
+
+  // ── Phase 4: Degradation chain integration ─────────────────────────────────
+  // Extract API key from Authorization header for rate limit identification.
+  // Format: "Bearer sk-..." — we SHA-256 hash the raw key to look up api_keys.
+  // For requests without an API key, skip rate limiting (dashboard demo traffic).
+  const authHeader = request.headers.get("Authorization");
+  const apiKeyRaw = authHeader?.replace("Bearer ", "").trim();
+
+  if (apiKeyRaw) {
+    const { createHash } = await import("crypto");
+    const keyHash = createHash("sha256").update(apiKeyRaw).digest("hex");
+    const apiKeyRecord = await prisma.apiKey.findFirst({
+      where: { keyHash },
+      select: { id: true },
+    });
+
+    if (apiKeyRecord) {
+      const degradation = await runDegradationChain(
+        apiKeyRecord.id,
+        body.prompt,
+        effectiveModelId,
+        getRateLimiter()
+      );
+
+      if (degradation.action === "reject") {
+        return new Response(
+          JSON.stringify({
+            error: "rate_limit_exceeded",
+            message: "All degradation stages exhausted. Retry after indicated delay.",
+            retry_after: degradation.retryAfterSec,
+            stages_traversed: degradation.stagesTraversed,
+          }),
+          {
+            status: 429,
+            headers: {
+              "Content-Type": "application/json",
+              "Retry-After": String(degradation.retryAfterSec ?? 60),
+              "X-RateLimit-Limit": String(60),
+              "X-RateLimit-Remaining": "0",
+              "X-RateLimit-Reset": String(
+                Math.floor(Date.now() / 1000) + (degradation.retryAfterSec ?? 60)
+              ),
+              "X-Degradation-Stages": degradation.stagesTraversed.join(","),
+            },
+          }
+        );
+      }
+
+      if (degradation.action === "cached") {
+        // Return cached response — skip LLM call entirely
+        return new Response(
+          JSON.stringify({
+            text: degradation.cachedResponse,
+            cached: true,
+            stages_traversed: degradation.stagesTraversed,
+          }),
+          {
+            status: 200,
+            headers: {
+              "Content-Type": "application/json",
+              "X-Served-From": "cache",
+              "X-Cache-Hit": "true",
+              "X-Degradation-Stages": degradation.stagesTraversed.join(","),
+            },
+          }
+        );
+      }
+
+      // degradation.action === 'proceed'
+      // Use degradation.model if Stage 2 assigned a fallback model
+      if (degradation.model && degradation.model !== effectiveModelId) {
+        effectiveModelId = degradation.model;
+        config = {
+          ...config,
+          models: [effectiveModelId, ...config.models.slice(1)],
+        };
+      }
+    }
+  }
+  // ── End Phase 4 degradation chain ─────────────────────────────────────────
+
+  let usedModel = effectiveModelId;
   let fallbackCount = 0;
   let fallbackReason: string | undefined;
   let streamResult;
@@ -156,6 +241,20 @@ export async function POST(request: NextRequest) {
         // Phase 3: log which prompt version was used for analytics
         ...(resolvedPromptVersionId ? { promptVersionId: resolvedPromptVersionId } : {}),
       });
+
+      // H10: Populate response_cache for Stage 3 degradation (Phase 4 cross-phase scope).
+      // Cache every successful LLM response so degraded requests can be served from cache.
+      try {
+        if (body.prompt && responseText && usedModel) {
+          await setCachedResponse(body.prompt, usedModel, responseText, {
+            ...(usage.inputTokens !== undefined ? { inputTokens: usage.inputTokens } : {}),
+            ...(usage.outputTokens !== undefined ? { outputTokens: usage.outputTokens } : {}),
+          });
+        }
+      } catch (cacheErr) {
+        // Cache write failure must never propagate
+        console.error("[after] response_cache write failed (non-fatal):", cacheErr);
+      }
     } catch (logError) {
       // Logging failure must NEVER propagate — response already sent
       console.error("[after] request logging failed:", logError);
