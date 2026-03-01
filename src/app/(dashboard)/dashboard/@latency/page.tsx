@@ -1,16 +1,7 @@
-import dynamic from "next/dynamic";
+import { LatencyChartLazy } from "@/components/charts/lazy";
 import { fetchLatencyPercentiles, getTimeRangeFromCookies } from "@/lib/dashboard/queries";
 
 export const revalidate = 300;
-
-// Dynamic import with ssr: false — prevents ResponsiveContainer SSR zero-dimension failure
-const LatencyChart = dynamic(
-  () => import("@/components/charts/LatencyChart").then((m) => m.LatencyChart),
-  {
-    ssr: false,
-    loading: () => <div className="h-[300px] animate-pulse rounded bg-gray-100" />,
-  }
-);
 
 export default async function LatencyPanel() {
   const timeRange = await getTimeRangeFromCookies();
@@ -33,5 +24,5 @@ export default async function LatencyPanel() {
       p99: Math.round(v.p99.reduce((s, x) => s + x, 0) / v.p99.length),
     }));
 
-  return <LatencyChart data={data} />;
+  return <LatencyChartLazy data={data} />;
 }
