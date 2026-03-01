@@ -1,20 +1,9 @@
-import { Nav } from "@/components/layout/nav";
-import { requireAuth } from "@/lib/auth/guards";
+import type { ReactNode } from "react";
 
-export default async function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  // requireAuth redirects to /login if unauthenticated
-  await requireAuth();
-
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <Nav />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {children}
-      </main>
-    </div>
-  );
+// Route group layout — public access.
+// The (dashboard)/dashboard/ nested layout provides its own full-page UI
+// with header, filter bar, and Realtime feed. No auth guard here —
+// dashboard is read-only and visible without login.
+export default function DashboardGroupLayout({ children }: { children: ReactNode }) {
+  return <>{children}</>;
 }

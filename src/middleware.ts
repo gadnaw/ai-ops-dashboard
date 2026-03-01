@@ -14,9 +14,7 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
           supabaseResponse = NextResponse.next({ request });
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
@@ -35,8 +33,8 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Protected routes — require authentication
+  // /dashboard is intentionally PUBLIC — demo dashboard is read-only, no auth required
   const isProtectedRoute =
-    pathname.startsWith("/dashboard") ||
     pathname.startsWith("/api/v1") ||
     pathname.startsWith("/settings") ||
     pathname.startsWith("/prompts") ||
