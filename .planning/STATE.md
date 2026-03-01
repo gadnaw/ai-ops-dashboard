@@ -2,15 +2,15 @@
 
 **Project:** AI Ops Dashboard — Production LLM Monitoring
 **Milestone:** Portfolio Demo
-**Updated:** 2026-03-01
+**Updated:** 2026-03-02
 
 ## Current Position
 
-**Status:** Phase 4 complete — 3/3 plans done
-**Phase:** Phase 4 — Reliability + Differentiators
-**Plan:** 04-03 complete (A/B Testing)
+**Status:** Phase 5 in progress — 1/3 plans done
+**Phase:** Phase 5 — Evaluation + Alerts
+**Plan:** 05-01 complete (Evaluation Service)
 **Task:** —
-**Last activity:** 2026-03-01 — Completed 04-03 (experiments/experiment_variants/variant_metrics/sprt_history schema, FNV-1a hash, SPRT engine, accumulator metrics with SELECT FOR UPDATE, experiment runner, REST API, SPRT chart + metrics table + controls UI)
+**Last activity:** 2026-03-02 — Completed 05-01 (evaluation_rubrics/jobs/scores schema, GPT-4o judge service, FNV-1a sampling trigger, FOR UPDATE SKIP LOCKED job processor, MSW Responses API mocks, Vitest tests)
 
 ## Progress
 
@@ -19,8 +19,8 @@ Phase 1 █████ 3/3 plans complete
 Phase 2 █████ 4/4 plans complete
 Phase 3 █████ 3/3 plans complete
 Phase 4 █████ 3/3 plans complete
-Phase 5 ░░░░░ 0/3 plans complete
-Overall: 13/16 plans complete (81%)
+Phase 5 █░░░░ 1/3 plans complete
+Overall: 14/16 plans complete (87%)
 ```
 
 ### Milestone Progress
@@ -31,7 +31,7 @@ Overall: 13/16 plans complete (81%)
 | 2 | Working Demo | Complete | 4/4 | All plans complete — data layer, model router, dashboard UI, config UI + seed |
 | 3 | Prompt Management + Playground | Complete | 3/3 | Prompt service + UI + Playground all done |
 | 4 | Reliability + Differentiators | Complete | 3/3 | Rate Limiter, Degradation Viz, A/B Testing all done |
-| 5 | Evaluation + Alerts | Planned | 3/3 | Eval service, Human review, Alert engine — 9 tasks |
+| 5 | Evaluation + Alerts | In Progress | 1/3 | Eval service done; Human review + Alert engine remain |
 
 ### Current Phase Detail
 
@@ -67,6 +67,14 @@ Overall: 13/16 plans complete (81%)
 | 04-01 Rate Limiter | Complete | 3/3 | 7516885 |
 | 04-02 Degradation Visualization | Complete | 2/2 | 9a0e260 |
 | 04-03 A/B Testing | Complete | 3/3 | d2046fc |
+
+**Phase 5: Evaluation + Alerts** — In progress (1/3 plans done).
+
+| Plan | Status | Tasks | Last Commit |
+|------|--------|-------|-------------|
+| 05-01 Evaluation Service | Complete | 3/3 | f99a990 |
+| 05-02 Human Review | Planned | — | — |
+| 05-03 Alert Engine | Planned | — | — |
 
 ## Accumulated Decisions
 
@@ -215,14 +223,14 @@ See: `.planning/PROJECT.md` (updated 2026-03-01)
 
 ## Session Continuity
 
-**Last session:** 2026-03-01
-**Stopped at:** Phase 4 Plan 04-02 complete — degradation query layer, REST API, DegradationTimeline Gantt chart, DegradationEventList, StageDetailPanel, /dashboard/degradation page
-**Resume file:** None — continue Phase 4 with 04-03 A/B Testing
+**Last session:** 2026-03-02
+**Stopped at:** Phase 5 Plan 05-01 complete — evaluation service schema, judge LLM service, FNV-1a trigger, job processor, MSW mocks, Vitest tests
+**Resume file:** None — continue Phase 5 with 05-02 Human Review
 
 ## Next Steps
 
-**Recommended:** Execute Phase 4 Plan 04-03 (A/B Testing)
-**Command:** `/gsd:execute-phase 4`
+**Recommended:** Execute Phase 5 Plan 05-02 (Human Review)
+**Command:** `/gsd:execute-phase 5`
 
 **Key additions from 04-02 for 04-03:**
 - Degradation queries: `import { getDegradationEvents, groupIntoChains, getDegradationStats } from '@/lib/degradation/queries'`
@@ -319,5 +327,20 @@ See: `.planning/PROJECT.md` (updated 2026-03-01)
 
 ---
 
-*Last updated: 2026-03-01*
-*Updated by: /gsd:execute-phase 4 — Plan 04-03 complete (A/B testing schema, FNV-1a hash, SPRT engine, accumulator metrics, experiment runner, REST API, SPRT chart + metrics UI)*
+**Key additions from 05-01 for Phase 5 plans 02-03:**
+- Evaluator: `import { judgeRequest, safeJudgeRequest, maybeQueueEvaluation, buildRubricText } from '@/lib/evaluator'`
+- Schema: evaluation_rubrics, evaluation_jobs, evaluation_scores tables (migration 20260302000000)
+- Default rubric: "General Quality Rubric v1" (accuracy 40%, coherence 30%, safety 30%) — seeded
+- Internal processor: `POST /api/internal/process-evaluations` with `x-internal-secret` header
+- MSW mocks: `import { server } from '@/mocks/node'` — intercepts `/v1/responses` (Responses API)
+- Env: `INTERNAL_CRON_SECRET` (optional, min 32 chars) added to env.ts
+- FNV-1a sampling: `maybeQueueEvaluation(requestId, 0.1)` in chat route after() callback
+- No FK on request_id columns — partitioned table constraint (same as rate_limit_events)
+- Variant metrics update: uses assignVariant() to re-derive variant (no experimentVariantId column)
+- MSW format: @ai-sdk/openai v3 uses Responses API (/v1/responses), not /v1/chat/completions
+- pg_cron setup: `prisma/migrations/20260302000000_phase5_evaluation_tables/pg_cron_eval.sql`
+
+---
+
+*Last updated: 2026-03-02*
+*Updated by: /gsd:execute-phase 5 — Plan 05-01 complete (evaluation_rubrics/jobs/scores schema, GPT-4o judge service, FNV-1a sampling trigger, FOR UPDATE SKIP LOCKED processor, MSW Responses API mocks, 25 passing tests)*
