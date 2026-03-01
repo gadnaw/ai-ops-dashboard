@@ -3,6 +3,7 @@ import { loadEndpointConfig, streamWithFallback } from "@/lib/model-router/route
 import { logRequest } from "@/lib/logging/request-logger";
 import { getErrorCode, isRetryableError } from "@/lib/model-router/errors";
 import { MODEL_PROVIDERS } from "@/lib/model-router/types";
+import { getVersion } from "@/lib/prompts/queries";
 import type { NextRequest } from "next/server";
 
 export const runtime = "nodejs"; // after() requires Node.js runtime (not Edge)
@@ -12,6 +13,9 @@ interface ChatRequestBody {
   prompt: string; // user message
   systemPrompt?: string; // optional override for system prompt
   sessionId?: string; // optional session tracking (COMP-01 deferred)
+  // Phase 3: version-aware playground routing
+  promptVersionId?: string; // prompt_versions.id — when present, use version content as system prompt
+  modelId?: string; // registry model ID override e.g. 'openai:gpt-4o' (for playground)
 }
 
 export async function POST(request: NextRequest) {
@@ -31,12 +35,46 @@ export async function POST(request: NextRequest) {
 
   const endpointName = body.endpoint ?? "chat";
 
+  // ---------------------------------------------------------------------------
+  // Phase 3: Resolve prompt version — when promptVersionId is provided,
+  // use that version's content as the system prompt (playground mode).
+  // This takes precedence over both body.systemPrompt and endpoint config.
+  // ---------------------------------------------------------------------------
+  let resolvedSystemPrompt: string | undefined = body.systemPrompt;
+  let resolvedPromptVersionId: string | undefined;
+
+  if (body.promptVersionId) {
+    try {
+      const version = await getVersion(body.promptVersionId);
+      if (!version) {
+        return Response.json(
+          { error: `Prompt version ${body.promptVersionId} not found` },
+          { status: 404 }
+        );
+      }
+      // Use the version's system_prompt if set, otherwise use its content as system prompt
+      resolvedSystemPrompt = version.systemPrompt ?? version.content;
+      resolvedPromptVersionId = version.id;
+    } catch {
+      return Response.json({ error: "Failed to load prompt version" }, { status: 500 });
+    }
+  }
+
   // Load endpoint config (primary model + fallback chain + temperature/maxTokens/systemPrompt)
   let config;
   try {
     config = await loadEndpointConfig(endpointName);
   } catch {
     return Response.json({ error: "Failed to load endpoint config" }, { status: 500 });
+  }
+
+  // Phase 3: modelId override for playground — replace primary model in config
+  // while preserving the fallback chain for reliability
+  if (body.modelId) {
+    config = {
+      ...config,
+      models: [body.modelId, ...config.models.slice(1)],
+    };
   }
 
   let usedModel = config.models[0] ?? "openai:gpt-4o";
@@ -49,7 +87,7 @@ export async function POST(request: NextRequest) {
       config,
       {
         prompt: body.prompt,
-        ...(body.systemPrompt ? { systemPrompt: body.systemPrompt } : {}),
+        ...(resolvedSystemPrompt ? { systemPrompt: resolvedSystemPrompt } : {}),
       },
       // onFallback callback — called when a model fails and we try the next
       (from, _to, error) => {
@@ -79,6 +117,7 @@ export async function POST(request: NextRequest) {
           isFallback: false,
           promptText: body.prompt,
           ...(body.sessionId ? { sessionId: body.sessionId } : {}),
+          ...(resolvedPromptVersionId ? { promptVersionId: resolvedPromptVersionId } : {}),
         });
       } catch (logError) {
         console.error("[after] error logging failed:", logError);
@@ -114,6 +153,8 @@ export async function POST(request: NextRequest) {
         promptText: body.prompt,
         ...(responseText ? { responseText } : {}),
         ...(body.sessionId ? { sessionId: body.sessionId } : {}),
+        // Phase 3: log which prompt version was used for analytics
+        ...(resolvedPromptVersionId ? { promptVersionId: resolvedPromptVersionId } : {}),
       });
     } catch (logError) {
       // Logging failure must NEVER propagate — response already sent
@@ -121,7 +162,6 @@ export async function POST(request: NextRequest) {
     }
   });
 
-  // H4: toUIMessageStreamResponse() — verify compatibility with useCompletion in Phase 3.
-  // For Phase 2, this is the correct streaming response method per AI SDK 6.
+  // H4: toUIMessageStreamResponse() — verified compatible with useCompletion in Phase 3.
   return streamResult.toUIMessageStreamResponse();
 }
