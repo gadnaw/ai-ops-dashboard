@@ -6,21 +6,21 @@
 
 ## Current Position
 
-**Status:** Phase 2 in progress — 1/4 plans done
+**Status:** Phase 2 in progress — 2/4 plans done
 **Phase:** Phase 2 — Working Demo (in progress)
-**Plan:** 02-01 complete
+**Plan:** 02-02 complete
 **Task:** —
-**Last activity:** 2026-03-01 — Completed 02-01 Data Layer (3/3 tasks)
+**Last activity:** 2026-03-01 — Completed 02-02 Model Router (3/3 tasks)
 
 ## Progress
 
 ```
 Phase 1 █████ 3/3 plans complete
-Phase 2 █░░░░ 1/4 plans complete
+Phase 2 ██░░░ 2/4 plans complete
 Phase 3 ░░░░░ 0/3 plans complete
 Phase 4 ░░░░░ 0/3 plans complete
 Phase 5 ░░░░░ 0/3 plans complete
-Overall: 4/16 plans complete (25%)
+Overall: 5/16 plans complete (31%)
 ```
 
 ### Milestone Progress
@@ -28,7 +28,7 @@ Overall: 4/16 plans complete (25%)
 | Phase | Name | Status | Plans | Notes |
 |-------|------|--------|-------|-------|
 | 1 | Foundation | Complete | 3/3 | Scaffold, Auth+RBAC, DevOps all done |
-| 2 | Working Demo | In Progress | 1/4 | Data layer complete; Model router, Dashboard UI, Config+Seed remaining |
+| 2 | Working Demo | In Progress | 2/4 | Data layer + Model router complete; Dashboard UI, Config+Seed remaining |
 | 3 | Prompt Management + Playground | Planned | 3/3 | Prompt service, Prompt UI, Playground — 7 tasks |
 | 4 | Reliability + Differentiators | Planned | 3/3 | Rate limiter, Degradation viz, A/B testing — 8 tasks |
 | 5 | Evaluation + Alerts | Planned | 3/3 | Eval service, Human review, Alert engine — 9 tasks |
@@ -48,7 +48,7 @@ Overall: 4/16 plans complete (25%)
 | Plan | Status | Tasks | Last Commit |
 |------|--------|-------|-------------|
 | 02-01 Data Layer | Complete | 3/3 | 5feb694 |
-| 02-02 Model Router | Planned | — | — |
+| 02-02 Model Router | Complete | 3/3 | 75ab9dc |
 | 02-03 Dashboard UI | Planned | — | — |
 | 02-04 Config+Seed | Planned | — | — |
 
@@ -93,6 +93,23 @@ Key architectural decisions locked at roadmap creation. These do NOT need re-eva
 - **ESLint rules locked:** `@typescript-eslint/no-explicit-any: error`, `@typescript-eslint/consistent-type-imports: error`, `@typescript-eslint/no-unused-vars: error`. These are enforced pre-commit with `--max-warnings=0`.
 - **Vercel build command:** `pnpm db:migrate && pnpm build` — migrations run before build in CI. Uses DIRECT_URL (port 5432).
 
+### Decisions from 02-01
+
+- **request_logs is partitioned — not Prisma-managed DDL:** Prisma schema maps to parent table for ORM queries. Partitions created via raw SQL. Plans 02-02+ use `prisma.requestLog.create()` — Prisma routes to correct partition automatically.
+- **pg_cron and Realtime in supabase/setup.sql:** `CREATE EXTENSION pg_cron` and `ALTER PUBLICATION` require superuser/Supabase-specific handling. Moved to `supabase/setup.sql` Phase 2 section.
+- **Dashboard never queries request_logs directly:** All dashboard data flows through 3 materialized views (hourly_cost_summary, hourly_latency_percentiles, daily_model_breakdown). Plans 02-03+ use `prisma.$queryRaw` on the views only.
+- **Rate card cache TTL = 1 minute:** Module-scoped cache in calculator.ts avoids per-request DB round-trip. Serverless function restarts reset cache naturally.
+- **calculateCost returns 0 on missing card (not error):** Allows request logging to succeed even for unknown model IDs. Plans 02-02+ should log costUsd=0 and handle rateCardFound=false in monitoring.
+
+### Decisions from 02-02
+
+- **AI SDK 6 maxOutputTokens (not maxTokens):** `streamText()` parameter renamed. FallbackChainConfig keeps `maxTokens` for DB field name compatibility; streamText() call uses `maxOutputTokens`.
+- **StreamTextResult.text is PromiseLike<string>:** No `.catch()` on PromiseLike. Must use `Promise.resolve(result.text).catch()` in after() callbacks.
+- **exactOptionalPropertyTypes — conditional spread pattern:** `...(value ? { key: value } : {})` for all optional fields in streamText(), Prisma create(), and logRequest() to satisfy TypeScript strict optional types.
+- **registry.languageModel() type assertion:** Dynamic modelId from DB is `string`; registry expects template literal union. Cast as `` `openai:${string}` | `anthropic:${string}` | `google:${string}` `` at call site.
+- **Prisma optional fields: null not undefined:** All optional Prisma fields use `?? null` coercion in logRequest() — Prisma optional fields are `string | null`, not `string | undefined`.
+- **cachedTokens from inputTokenDetails.cacheReadTokens:** AI SDK 6 caches token count accessed via `usage.inputTokenDetails?.cacheReadTokens` (not a top-level `cachedTokens` property).
+
 ## Blockers
 
 No current blockers.
@@ -110,7 +127,7 @@ No checkpoint files.
 See: `.planning/PROJECT.md` (updated 2026-03-01)
 
 **Core value:** Ship AI that works in production, not just in notebooks.
-**Current focus:** Phase 2 Working Demo in progress — 02-01 Data Layer complete
+**Current focus:** Phase 2 Working Demo in progress — 02-02 Model Router complete
 
 ## Configuration
 
@@ -120,33 +137,28 @@ See: `.planning/PROJECT.md` (updated 2026-03-01)
 - **Workflow:** Sequential (research-all → analyze-research → plan-all)
 - **Prototype Mode:** Active (demo-ready after Phase 2)
 
-### Decisions from 02-01
-
-- **request_logs is partitioned — not Prisma-managed DDL:** Prisma schema maps to parent table for ORM queries. Partitions created via raw SQL. Plans 02-02+ use `prisma.requestLog.create()` — Prisma routes to correct partition automatically.
-- **pg_cron and Realtime in supabase/setup.sql:** `CREATE EXTENSION pg_cron` and `ALTER PUBLICATION` require superuser/Supabase-specific handling. Moved to `supabase/setup.sql` Phase 2 section.
-- **Dashboard never queries request_logs directly:** All dashboard data flows through 3 materialized views (hourly_cost_summary, hourly_latency_percentiles, daily_model_breakdown). Plans 02-03+ use `prisma.$queryRaw` on the views only.
-- **Rate card cache TTL = 1 minute:** Module-scoped cache in calculator.ts avoids per-request DB round-trip. Serverless function restarts reset cache naturally.
-- **calculateCost returns 0 on missing card (not error):** Allows request logging to succeed even for unknown model IDs. Plans 02-02+ should log costUsd=0 and handle rateCardFound=false in monitoring.
-
 ## Session Continuity
 
-**Last session:** 2026-03-01 08:16 UTC
-**Stopped at:** Completed 02-01-PLAN.md (3/3 tasks)
-**Resume file:** None — continue with Phase 2 Plan 02-02
+**Last session:** 2026-03-01
+**Stopped at:** Completed 02-02-PLAN.md (3/3 tasks)
+**Resume file:** None — continue with Phase 2 Plan 02-03
 
 ## Next Steps
 
-**Recommended:** Execute Phase 2 Plan 02-02 (Model Router)
-**Command:** `/gsd:execute-phase 2` (plan 02-02)
+**Recommended:** Execute Phase 2 Plan 02-03 (Dashboard UI)
+**Command:** `/gsd:execute-phase 2` (plan 02-03)
 
 **Key handoff context for Phase 2 remaining plans:**
 - Database schema: apply migrations manually via Supabase SQL Editor (see 02-01-SUMMARY.md)
 - pg_cron: must be enabled in Supabase Dashboard > Database > Extensions
 - supabase/setup.sql: Phase 2 section must be run after migrations
-- calculateCost import: `import { calculateCost } from '@/lib/cost/calculator'`
-- Materialized views: NEVER query request_logs directly in dashboard slots
-- Model IDs: use `'openai:gpt-4o'`, `'anthropic:claude-3-5-sonnet-20241022'`, `'google:gemini-2.5-flash'` format
-- AI SDK 6 token properties: `usage.inputTokens` / `usage.outputTokens` (H3)
+- Model router: `import { streamWithFallback, loadEndpointConfig } from '@/lib/model-router/router'`
+- Registry: `import { registry } from '@/lib/model-router/registry'`
+- Logger: `import { logRequest } from '@/lib/logging/request-logger'` — only call from after() callbacks
+- Materialized views: NEVER query request_logs directly in dashboard slots — use hourly_cost_summary, hourly_latency_percentiles, daily_model_breakdown
+- Token properties: `usage.inputTokens`, `usage.outputTokens`, `usage.inputTokenDetails.cacheReadTokens`
+- maxOutputTokens: AI SDK 6 renamed maxTokens to maxOutputTokens in streamText()
+- Optional fields: use conditional spread `...(val ? { key: val } : {})` not `val: undefined`
 - Lint script: `pnpm lint` = `eslint src/` (not `next lint`)
 - Pre-commit hooks active: ESLint + Prettier run on every commit automatically
 - Auth helpers: `import { requireAuth, requireRole } from '@/lib/auth/guards'`
@@ -155,4 +167,4 @@ See: `.planning/PROJECT.md` (updated 2026-03-01)
 ---
 
 *Last updated: 2026-03-01*
-*Updated by: /gsd:execute-phase — Plan 02-01 complete*
+*Updated by: /gsd:execute-phase — Plan 02-02 complete*
