@@ -87,7 +87,7 @@ export async function fetchCostSummary(
   >(
     Prisma.sql`
     SELECT
-      date_trunc(${bucket}, hour)  AS bucket,
+      date_bin(${bucket}::interval, hour, '2024-01-01'::timestamptz) AS bucket,
       provider,
       model,
       SUM(total_cost)              AS total_cost,
@@ -96,7 +96,7 @@ export async function fetchCostSummary(
     FROM hourly_cost_summary
     WHERE hour >= ${startTime}
     ${providerFilter}
-    GROUP BY date_trunc(${bucket}, hour), provider, model
+    GROUP BY date_bin(${bucket}::interval, hour, '2024-01-01'::timestamptz), provider, model
     ORDER BY bucket ASC
   `
   );
@@ -144,7 +144,7 @@ export async function fetchLatencyPercentiles(
   >(
     Prisma.sql`
     SELECT
-      date_trunc(${bucket}, hour)                                  AS bucket,
+      date_bin(${bucket}::interval, hour, '2024-01-01'::timestamptz) AS bucket,
       provider,
       percentile_cont(0.50) WITHIN GROUP (ORDER BY p50)            AS p50,
       percentile_cont(0.95) WITHIN GROUP (ORDER BY p95)            AS p95,
@@ -153,7 +153,7 @@ export async function fetchLatencyPercentiles(
     FROM hourly_latency_percentiles
     WHERE hour >= ${startTime}
     ${providerFilter}
-    GROUP BY date_trunc(${bucket}, hour), provider
+    GROUP BY date_bin(${bucket}::interval, hour, '2024-01-01'::timestamptz), provider
     ORDER BY bucket ASC
   `
   );
@@ -230,13 +230,13 @@ export async function fetchRequestVolume(timeRange: TimeRange): Promise<
   >(
     Prisma.sql`
     SELECT
-      date_trunc(${bucket}, hour)  AS bucket,
+      date_bin(${bucket}::interval, hour, '2024-01-01'::timestamptz) AS bucket,
       SUM(request_count)           AS total_requests,
       SUM(error_count)             AS error_requests,
       SUM(fallback_count)          AS fallback_requests
     FROM hourly_cost_summary
     WHERE hour >= ${startTime}
-    GROUP BY date_trunc(${bucket}, hour)
+    GROUP BY date_bin(${bucket}::interval, hour, '2024-01-01'::timestamptz)
     ORDER BY bucket ASC
   `
   );
