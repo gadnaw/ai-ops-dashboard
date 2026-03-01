@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "buildCommand": "pnpm db:migrate && pnpm build",
+  "installCommand": "pnpm install",
+  "devCommand": "pnpm dev",
+  "env": {
+    "NEXT_TELEMETRY_DISABLED": "1"
+  }
+}
