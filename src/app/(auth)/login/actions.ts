@@ -37,4 +37,6 @@ export async function loginWithOAuth(provider: "github" | "google") {
   if (data.url) {
     redirect(data.url);
   }
+
+  return { error: "OAuth provider did not return a redirect URL" };
 }
