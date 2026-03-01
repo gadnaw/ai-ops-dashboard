@@ -34,11 +34,13 @@ export async function middleware(request: NextRequest) {
 
   // Protected routes — require authentication
   // /dashboard is intentionally PUBLIC — demo dashboard is read-only, no auth required
+  // /config is PROTECTED — requires DEVELOPER+ role to view or modify endpoint configs
   const isProtectedRoute =
     pathname.startsWith("/api/v1") ||
     pathname.startsWith("/settings") ||
     pathname.startsWith("/prompts") ||
-    pathname.startsWith("/playground");
+    pathname.startsWith("/playground") ||
+    pathname.startsWith("/config");
 
   if (!user && isProtectedRoute) {
     const loginUrl = new URL("/login", request.url);
