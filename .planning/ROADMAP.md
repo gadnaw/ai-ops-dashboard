@@ -53,12 +53,12 @@ This roadmap delivers a production-grade AI operations dashboard in five phases,
 4. The folder structure (`src/app/`, `src/lib/`, `src/components/`, `prisma/`) and naming conventions are established and documented in a single architecture decision record.
 5. `.env.example` lists every required environment variable with descriptions; no secrets are committed; `pnpm db:migrate` runs against Supabase without error using `DIRECT_URL`.
 
-**Plans:** TBD
+**Plans:** 3 plans
 
 Plans:
-- [ ] 01-01: Scaffold — Next.js 15 + Tailwind 4 + TypeScript strict, Prisma schema with dual connection strings, Supabase project init, base folder structure
-- [ ] 01-02: Auth + RBAC — Supabase Auth, email + OAuth (GitHub, Google), Admin/Developer/Viewer roles, RLS policies, middleware auth guard
-- [ ] 01-03: DevOps — Vercel CI/CD, preview deployments on PRs, ESLint + Prettier + pre-commit hooks (secret detection, lint, type-check), .env.example
+- [ ] 01-01-PLAN.md — Scaffold: Next.js 15 + Tailwind 4 + TypeScript strict, Prisma schema with dual connection strings, Supabase project init, base folder structure
+- [ ] 01-02-PLAN.md — Auth + RBAC: Supabase Auth, email + OAuth (GitHub, Google), Admin/Developer/Viewer roles, RLS policies, middleware auth guard
+- [ ] 01-03-PLAN.md — DevOps: Vercel CI/CD, preview deployments on PRs, ESLint + Prettier + pre-commit hooks (secret detection, lint, type-check), .env.example
 
 ---
 
@@ -84,7 +84,7 @@ Plans:
 - 10,000 requests spanning 30 days with log-normal latency distribution (p50 ~400ms, p95 ~1200ms, occasional spikes)
 - Cost spike on day 15 (3x normal volume, visible in trend chart)
 - Fallback events scattered throughout (primary model → fallback model chain with logged degradation reason)
-- Requests spread across OpenAI GPT-4o, Claude 3.5 Sonnet, Gemini 1.5 Pro in realistic proportions (~60/25/15)
+- Requests spread across OpenAI GPT-4o, Claude 3.5 Sonnet, Gemini 2.5 Flash in realistic proportions (~60/25/15)
 - 5 named prompt versions across 2-3 endpoints (summarization, classification, extraction)
 - Error rate of 1-3% with realistic categorization (rate limit, timeout, model error)
 - Business-hours traffic pattern (higher Mon-Fri 9am-6pm, lower evenings/weekends)
@@ -96,13 +96,13 @@ Plans:
 4. The model configuration UI lets a user change temperature, max tokens, and system prompt for an endpoint; the next request through that endpoint uses the new configuration.
 5. Running `pnpm db:seed` populates the database with 10K requests including the day-15 cost spike and fallback events; the dashboard renders the spike visually without timeout errors.
 
-**Plans:** TBD
+**Plans:** 4 plans
 
 Plans:
-- [ ] 02-01: Data layer — `request_logs` partitioned table, materialized views (`hourly_cost_summary`, `hourly_latency_percentiles`, `daily_model_breakdown`), pg_cron refresh jobs, cost rate-card table, `dashboard_events` summary table, `session_id` optional column
-- [ ] 02-02: Model router — Vercel AI SDK `createProviderRegistry()`, OpenAI + Anthropic + Google providers, priority-based fallback chains with exponential backoff + jitter, unified response normalization, `after()` fire-and-forget logging with full usage object parsing (including cached tokens)
-- [ ] 02-03: Dashboard UI — App Router parallel routes (`@cost`, `@latency`, `@requests`, `@models`), Recharts charts (area/line/pie/bar), Supabase Realtime on `dashboard_events`, Zustand filter store (time range, model filter), skeleton loading states, connection status indicator, date range picker (24h/7d/30d/custom)
-- [ ] 02-04: Config UI + seed data — Model config management UI (temperature, max tokens, system prompts per endpoint), `prisma/seed.ts` with realistic distributions, `pnpm db:seed` script
+- [ ] 02-01-PLAN.md — Data layer: `request_logs` partitioned table, materialized views (`hourly_cost_summary`, `hourly_latency_percentiles`, `daily_model_breakdown`), pg_cron refresh jobs, cost rate-card table, `dashboard_events` summary table, `endpoint_configs` table, cost calculator service
+- [ ] 02-02-PLAN.md — Model router: Vercel AI SDK `createProviderRegistry()`, OpenAI + Anthropic + Google providers, priority-based fallback chains with exponential backoff + jitter, `after()` fire-and-forget logging with full usage object parsing (including cached tokens via `usage.inputTokens`/`usage.outputTokens`)
+- [ ] 02-03-PLAN.md — Dashboard UI: App Router parallel routes (`@cost`, `@latency`, `@requests`, `@models`), Recharts 3.x charts (area/line/pie/bar), Supabase Realtime on `dashboard_events`, Zustand filter store (time range, model filter), skeleton loading states, connection status indicator, dynamic import with `ssr: false`
+- [ ] 02-04-PLAN.md — Config UI + seed data: Model config management UI (temperature, max tokens, system prompts per endpoint), `prisma/seed.ts` with modular `seedBaseData()` + day-15 cost spike, `pnpm db:seed` script, public dashboard middleware update
 
 ---
 
@@ -241,7 +241,7 @@ These requirements are documented but NOT mapped to any phase in this milestone.
 | Phase | Name | Plans Complete | Status | Completed |
 |-------|------|----------------|--------|-----------|
 | 1 | Foundation | 0/3 | Not started | — |
-| 2 | Working Demo | 0/4 | Not started | — |
+| 2 | Working Demo | 0/4 | Planned | — |
 | 3 | Prompt Management + Playground | 0/3 | Not started | — |
 | 4 | Reliability + Differentiators | 0/3 | Not started | — |
 | 5 | Evaluation + Alerts | 0/3 | Not started | — |
@@ -264,10 +264,12 @@ These are confirmed decisions from research that constrain all phases. Do not re
 | Recharts 3.x API, server-side downsampled to 200-500 points | Pitfall 11 — community tutorials use 2.x API; animations disabled on all dashboard charts | 2 |
 | Pricing as database table, not constants | Pitfall 7 — updatable without deployment when providers change rates | 2 |
 | SPRT for A/B auto-stop (not repeated t-tests) | Fixed-sample tests do not support early stopping without peeking bias inflation | 4 |
+| Google model IDs updated: gemini-2.5-flash + gemini-2.0-flash | gemini-1.5-pro and gemini-1.5-flash discontinued September 24, 2025. Intent preserved: cheap flash tier + capable tier from Google | 2, 3, 4, 5 |
 
 ---
 
-*Roadmap version: 1.0*
+*Roadmap version: 1.1*
 *Created: 2026-03-01*
+*Updated: 2026-03-01 (Phase 2 plans finalized)*
 *Milestone: Portfolio Demo*
 *Coverage: 12/12 active requirements mapped, 3 deferred*
