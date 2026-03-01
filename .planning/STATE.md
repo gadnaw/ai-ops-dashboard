@@ -6,28 +6,28 @@
 
 ## Current Position
 
-**Status:** Phase 1 in progress — Plan 01-02 complete
-**Phase:** Phase 1 — Foundation (in progress)
-**Plan:** 01-02 complete, 01-03 next
+**Status:** Phase 1 complete — All 3 plans done
+**Phase:** Phase 1 — Foundation (complete)
+**Plan:** 01-03 complete
 **Task:** —
-**Last activity:** 2026-03-01 — Completed 01-02 Auth+RBAC (5/5 tasks)
+**Last activity:** 2026-03-01 — Completed 01-03 DevOps (4/4 tasks)
 
 ## Progress
 
 ```
-Phase 1 ████░ 2/3 plans complete
+Phase 1 █████ 3/3 plans complete
 Phase 2 ░░░░░ 0/4 plans complete
 Phase 3 ░░░░░ 0/3 plans complete
 Phase 4 ░░░░░ 0/3 plans complete
 Phase 5 ░░░░░ 0/3 plans complete
-Overall: 2/16 plans complete (12%)
+Overall: 3/16 plans complete (19%)
 ```
 
 ### Milestone Progress
 
 | Phase | Name | Status | Plans | Notes |
 |-------|------|--------|-------|-------|
-| 1 | Foundation | In Progress | 3/3 | Scaffold done, Auth+RBAC done, DevOps pending |
+| 1 | Foundation | Complete | 3/3 | Scaffold, Auth+RBAC, DevOps all done |
 | 2 | Working Demo | Planned | 4/4 | Data layer, Model router, Dashboard UI, Config+Seed — 24 tasks |
 | 3 | Prompt Management + Playground | Planned | 3/3 | Prompt service, Prompt UI, Playground — 7 tasks |
 | 4 | Reliability + Differentiators | Planned | 3/3 | Rate limiter, Degradation viz, A/B testing — 8 tasks |
@@ -35,13 +35,13 @@ Overall: 2/16 plans complete (12%)
 
 ### Current Phase Detail
 
-**Phase 1: Foundation** — Plans 01-01 and 01-02 complete.
+**Phase 1: Foundation** — All plans complete.
 
 | Plan | Status | Tasks | Last Commit |
 |------|--------|-------|-------------|
 | 01-01 Scaffold | Complete | 4/4 | 97fe70b |
-| 01-02 Auth+RBAC | Complete | 5/5 | 9c74dc7 |
-| 01-03 DevOps | Ready | 4 | — |
+| 01-02 Auth+RBAC | Complete | 5/5 | 8be37a9 |
+| 01-03 DevOps | Complete | 4/4 | eeeacc6 |
 
 ## Accumulated Decisions
 
@@ -76,6 +76,14 @@ Key architectural decisions locked at roadmap creation. These do NOT need re-eva
 - **Nav as Server Component:** Nav is an async Server Component reading session server-side. No client-side context provider needed for session display.
 - **PKCE OAuth callback:** /auth/callback Route Handler exchanges authorization code for session. OAuth redirect URL = `${window.location.origin}/auth/callback`.
 
+### Decisions from 01-03
+
+- **lint script:** `pnpm lint` = `eslint src/` (NOT `next lint` — removed in Next.js 16). All Phase 2+ code must pass `eslint src/` cleanly.
+- **Husky v9 format:** Pre-commit hooks use plain shell scripts without deprecated `#!/usr/bin/env sh . husky.sh` sourcing. Husky v9 wraps execution itself.
+- **Secret detection scope:** Pre-commit scans `.ts/.tsx/.js/.jsx/.mjs/.cjs/.env*` files only. Docs and .env.example are exempt. Pattern: `NEXT_PUBLIC_[A-Z_]*KEY` on non-comment added lines.
+- **ESLint rules locked:** `@typescript-eslint/no-explicit-any: error`, `@typescript-eslint/consistent-type-imports: error`, `@typescript-eslint/no-unused-vars: error`. These are enforced pre-commit with `--max-warnings=0`.
+- **Vercel build command:** `pnpm db:migrate && pnpm build` — migrations run before build in CI. Uses DIRECT_URL (port 5432).
+
 ## Blockers
 
 No current blockers.
@@ -93,7 +101,7 @@ No checkpoint files.
 See: `.planning/PROJECT.md` (updated 2026-03-01)
 
 **Core value:** Ship AI that works in production, not just in notebooks.
-**Current focus:** Phase 1 — Plan 01-03 DevOps is next
+**Current focus:** Phase 1 complete — Phase 2 Working Demo is next
 
 ## Configuration
 
@@ -105,23 +113,26 @@ See: `.planning/PROJECT.md` (updated 2026-03-01)
 
 ## Session Continuity
 
-**Last session:** 2026-03-01 07:00 UTC
-**Stopped at:** Completed 01-02-PLAN.md (5/5 tasks)
-**Resume file:** None — continue with Plan 01-03
+**Last session:** 2026-03-01 07:08 UTC
+**Stopped at:** Completed 01-03-PLAN.md (4/4 tasks)
+**Resume file:** None — continue with Phase 2
 
 ## Next Steps
 
-**Recommended:** Execute Plan 01-03 (DevOps — CI/CD pipeline, Dockerfile, env config)
-**Command:** `/gsd:execute-phase 1` (will pick up 01-03 next)
+**Recommended:** Execute Phase 2 (Working Demo — data layer, model router, dashboard UI, config+seed)
+**Command:** `/gsd:execute-phase 2`
 
-**Key handoff context for Plan 01-03:**
-- Auth helpers ready: `import { requireAuth, requireRole } from '@/lib/auth/guards'`
-- Supabase clients: createSupabaseServerClient() for server, createSupabaseBrowserClient() for client
-- Middleware at src/middleware.ts protects /dashboard/*, /api/v1/*, /settings/*, /prompts/*, /playground/*
-- Pre-existing TS errors in next.config.ts and playwright.config.ts (from Plan 01-01) — may need fixing in 01-03
-- cn() utility at src/lib/utils.ts, Button + Input primitives at src/components/ui/
+**Key handoff context for Phase 2:**
+- Lint script: `pnpm lint` = `eslint src/` (not `next lint` — removed in Next.js 16)
+- Pre-commit hooks active: ESLint + Prettier run on every commit automatically
+- Secret detection blocks `NEXT_PUBLIC_*KEY` in code files
+- Vercel config: `vercel.json` with `pnpm db:migrate && pnpm build` build command
+- All Phase 1 checks pass: lint, type-check, test:run all green
+- Auth helpers: `import { requireAuth, requireRole } from '@/lib/auth/guards'`
+- Prisma client: `import { prisma } from '@/lib/db/prisma'`
+- For Next.js 16 experimental features not in types: use `// @ts-expect-error`
 
 ---
 
 *Last updated: 2026-03-01*
-*Updated by: /gsd:execute-phase — Plan 01-02 complete*
+*Updated by: /gsd:execute-phase — Plan 01-03 complete*
