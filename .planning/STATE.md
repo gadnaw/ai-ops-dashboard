@@ -6,21 +6,21 @@
 
 ## Current Position
 
-**Status:** Phase 3 in progress — 1/3 plans complete
+**Status:** Phase 3 in progress — 2/3 plans complete
 **Phase:** Phase 3 — Prompt Management + Playground
-**Plan:** 03-01 complete (Prompt Manager Service)
+**Plan:** 03-02 complete (Prompt UI)
 **Task:** —
-**Last activity:** 2026-03-01 — Completed 03-01 (prompt schema, triggers, FK, queries, actions, REST API, version-aware chat)
+**Last activity:** 2026-03-01 — Completed 03-02 (PromptEditor/CodeMirror, DiffViewer, VersionList/useOptimistic, 5 prompt routes, @requests filter)
 
 ## Progress
 
 ```
 Phase 1 █████ 3/3 plans complete
 Phase 2 █████ 4/4 plans complete
-Phase 3 █░░░░ 1/3 plans complete
+Phase 3 ███░░ 2/3 plans complete
 Phase 4 ░░░░░ 0/3 plans complete
 Phase 5 ░░░░░ 0/3 plans complete
-Overall: 8/16 plans complete (50%)
+Overall: 9/16 plans complete (56%)
 ```
 
 ### Milestone Progress
@@ -29,7 +29,7 @@ Overall: 8/16 plans complete (50%)
 |-------|------|--------|-------|-------|
 | 1 | Foundation | Complete | 3/3 | Scaffold, Auth+RBAC, DevOps all done |
 | 2 | Working Demo | Complete | 4/4 | All plans complete — data layer, model router, dashboard UI, config UI + seed |
-| 3 | Prompt Management + Playground | In Progress | 1/3 | Prompt service done; Prompt UI, Playground remaining |
+| 3 | Prompt Management + Playground | In Progress | 2/3 | Prompt service + UI done; Playground remaining |
 | 4 | Reliability + Differentiators | Planned | 3/3 | Rate limiter, Degradation viz, A/B testing — 8 tasks |
 | 5 | Evaluation + Alerts | Planned | 3/3 | Eval service, Human review, Alert engine — 9 tasks |
 
@@ -57,7 +57,7 @@ Overall: 8/16 plans complete (50%)
 | Plan | Status | Tasks | Last Commit |
 |------|--------|-------|-------------|
 | 03-01 Prompt Manager Service | Complete | 3/3 | db3c604 |
-| 03-02 Prompt UI | Pending | 0/3 | — |
+| 03-02 Prompt UI | Complete | 2/2 | ca73379 |
 | 03-03 Playground | Pending | 0/3 | — |
 
 ## Accumulated Decisions
@@ -183,13 +183,13 @@ See: `.planning/PROJECT.md` (updated 2026-03-01)
 ## Session Continuity
 
 **Last session:** 2026-03-01
-**Stopped at:** Phase 3 Plan 03-01 complete — prompt schema, triggers, queries, actions, REST API, version-aware chat
+**Stopped at:** Phase 3 Plan 03-02 complete — PromptEditor/CodeMirror, DiffViewer, VersionList/useOptimistic, 5 prompt routes, @requests filter
 **Resume file:** None — continue Phase 3
 
 ## Next Steps
 
-**Recommended:** Execute Phase 3 Plan 03-02 (Prompt UI)
-**Command:** `/gsd:execute-phase 3` (plan 03-02)
+**Recommended:** Execute Phase 3 Plan 03-03 (Playground)
+**Command:** `/gsd:execute-phase 3` (plan 03-03)
 
 **Key handoff context for Phase 3:**
 - Config UI: `import { updateEndpointConfig } from '@/app/(dashboard)/config/actions'`
@@ -228,5 +228,15 @@ See: `.planning/PROJECT.md` (updated 2026-03-01)
 
 ---
 
+**Key additions from 03-02 for 03-03:**
+- Prompt UI routes: /prompts, /prompts/new, /prompts/[slug], /prompts/[slug]/new-version, /prompts/[slug]/diff
+- PromptEditor (SSR-safe): `import { PromptEditor } from '@/components/prompts/PromptEditor'` — CodeMirror 6 with amber {{var}} highlighting
+- Playground link: /prompts/[slug] has "Test in Playground" button → `/playground?promptVersionId=UUID`
+- Query additions: `getTemplateWithVersionsBySlug(slug)`, `getTwoVersionsByIds(v1Id, v2Id)` added to queries.ts
+- getTemplates() now includes `versions: { take: 1 }` (latest version number for list view)
+- @requests panel: has prompt version filter dropdown (URL param: ?promptVersionId=UUID)
+
+---
+
 *Last updated: 2026-03-01*
-*Updated by: /gsd:execute-phase 3 — Plan 03-01 complete (prompt schema, triggers, queries, actions, REST API, version-aware chat)*
+*Updated by: /gsd:execute-phase 3 — Plan 03-02 complete (PromptEditor/CodeMirror, DiffViewer, VersionList/useOptimistic, 5 prompt routes, @requests filter)*
