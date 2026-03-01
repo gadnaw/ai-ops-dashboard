@@ -34,7 +34,7 @@ export function ModelPieChart({ data }: ModelPieChartProps) {
               <Cell key={idx} fill={COLORS[idx % COLORS.length]!} />
             ))}
           </Pie>
-          <Tooltip formatter={(v: number) => [v.toLocaleString(), "Requests"]} />
+          <Tooltip formatter={(v: number | undefined) => [(v ?? 0).toLocaleString(), "Requests"]} />
           <Legend />
         </PieChart>
       </ResponsiveContainer>

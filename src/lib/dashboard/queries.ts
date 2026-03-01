@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 
@@ -7,6 +8,18 @@ import { prisma } from "@/lib/db/prisma";
 // 7d  → 1-hour buckets = 168 points max
 // 30d → 6-hour buckets = 120 points max
 export type TimeRange = "24h" | "7d" | "30d";
+
+const VALID_TIME_RANGES = new Set<string>(["24h", "7d", "30d"]);
+
+// Read time range from cookie set by FilterBar. Default to 30d to show full seed data including day-15 spike.
+export async function getTimeRangeFromCookies(): Promise<TimeRange> {
+  const cookieStore = await cookies();
+  const value = cookieStore.get("dashboard-time-range")?.value;
+  if (value && VALID_TIME_RANGES.has(value)) {
+    return value as TimeRange;
+  }
+  return "30d";
+}
 
 function getTimeBucketSQL(timeRange: TimeRange): string {
   switch (timeRange) {

@@ -1,12 +1,17 @@
-import { fetchCostSummary, fetchRequestVolume } from "@/lib/dashboard/queries";
+import {
+  fetchCostSummary,
+  fetchRequestVolume,
+  getTimeRangeFromCookies,
+} from "@/lib/dashboard/queries";
 
 // ISR: revalidate every 5 minutes — matches pg_cron refresh interval
 export const revalidate = 300;
 
 export default async function DashboardPage() {
+  const timeRange = await getTimeRangeFromCookies();
   const [costData, volumeData] = await Promise.all([
-    fetchCostSummary("30d"),
-    fetchRequestVolume("30d"),
+    fetchCostSummary(timeRange),
+    fetchRequestVolume(timeRange),
   ]);
 
   const totalCost = costData.reduce((acc, r) => acc + r.total_cost, 0);
@@ -22,14 +27,14 @@ export default async function DashboardPage() {
 
   const stats = [
     {
-      label: "Total Cost (30d)",
+      label: `Total Cost (${timeRange})`,
       value: `$${totalCost.toFixed(4)}`,
       description: "Across all providers",
     },
     {
-      label: "Total Requests (30d)",
+      label: `Total Requests (${timeRange})`,
       value: totalRequests.toLocaleString(),
-      description: "10K seed data",
+      description: "Seed data",
     },
     {
       label: "Error Rate",

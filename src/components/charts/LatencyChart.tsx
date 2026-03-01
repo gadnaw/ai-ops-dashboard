@@ -32,7 +32,7 @@ export function LatencyChart({ data }: LatencyChartProps) {
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
           <XAxis dataKey="bucket" tickFormatter={formatXAxis} tick={{ fontSize: 11 }} />
           <YAxis tickFormatter={(v: number) => `${v}ms`} tick={{ fontSize: 11 }} />
-          <Tooltip formatter={(v: number) => [`${v}ms`, undefined]} />
+          <Tooltip formatter={(v: number | undefined) => [`${v ?? 0}ms`, undefined]} />
           <Legend />
           <Line
             type="monotone"

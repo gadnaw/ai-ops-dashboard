@@ -11,6 +11,12 @@ const TIME_RANGE_OPTIONS: Array<{ label: string; value: TimeRange }> = [
   { label: "30d", value: "30d" },
 ];
 
+// Extracted outside component scope — React compiler immutability rule
+// only flags mutations of external values inside component/hook bodies.
+function persistTimeRangeCookie(range: TimeRange) {
+  document.cookie = `dashboard-time-range=${range};path=/;max-age=${60 * 60 * 24 * 365};samesite=lax`;
+}
+
 export function FilterBar() {
   const { timeRange, setTimeRange, _hasHydrated, setHasHydrated } = useDashboardFilterStore();
   const router = useRouter();
@@ -23,7 +29,7 @@ export function FilterBar() {
 
   function handleTimeRangeChange(range: TimeRange) {
     setTimeRange(range);
-    // Trigger server re-fetch with new time range via router refresh
+    persistTimeRangeCookie(range);
     router.refresh();
   }
 

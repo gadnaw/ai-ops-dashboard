@@ -73,15 +73,15 @@ export function CostTrendChart({ data }: CostTrendChartProps) {
             tick={{ fontSize: 11 }}
             width={70}
           />
-          <Tooltip formatter={(v: number) => [`$${v.toFixed(6)}`, undefined]} />
+          <Tooltip formatter={(v: number | undefined) => [`$${(v ?? 0).toFixed(6)}`, undefined]} />
           <Legend />
           <Area
             type="monotone"
             dataKey="openai"
             name="OpenAI"
             stackId="1"
-            stroke={PROVIDER_COLORS.openai}
-            fill={PROVIDER_COLORS.openai}
+            stroke={PROVIDER_COLORS.openai!}
+            fill={PROVIDER_COLORS.openai!}
             fillOpacity={0.6}
             isAnimationActive={false}
           />
@@ -90,8 +90,8 @@ export function CostTrendChart({ data }: CostTrendChartProps) {
             dataKey="anthropic"
             name="Anthropic"
             stackId="1"
-            stroke={PROVIDER_COLORS.anthropic}
-            fill={PROVIDER_COLORS.anthropic}
+            stroke={PROVIDER_COLORS.anthropic!}
+            fill={PROVIDER_COLORS.anthropic!}
             fillOpacity={0.6}
             isAnimationActive={false}
           />
@@ -100,8 +100,8 @@ export function CostTrendChart({ data }: CostTrendChartProps) {
             dataKey="google"
             name="Google"
             stackId="1"
-            stroke={PROVIDER_COLORS.google}
-            fill={PROVIDER_COLORS.google}
+            stroke={PROVIDER_COLORS.google!}
+            fill={PROVIDER_COLORS.google!}
             fillOpacity={0.6}
             isAnimationActive={false}
           />

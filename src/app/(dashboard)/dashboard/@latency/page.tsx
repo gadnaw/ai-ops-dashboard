@@ -1,5 +1,5 @@
 import dynamic from "next/dynamic";
-import { fetchLatencyPercentiles } from "@/lib/dashboard/queries";
+import { fetchLatencyPercentiles, getTimeRangeFromCookies } from "@/lib/dashboard/queries";
 
 export const revalidate = 300;
 
@@ -13,7 +13,8 @@ const LatencyChart = dynamic(
 );
 
 export default async function LatencyPanel() {
-  const rawData = await fetchLatencyPercentiles("7d");
+  const timeRange = await getTimeRangeFromCookies();
+  const rawData = await fetchLatencyPercentiles(timeRange);
   // Aggregate across providers for the chart — average p50/p95/p99 per bucket
   const byBucket = new Map<string, { p50: number[]; p95: number[]; p99: number[] }>();
   for (const row of rawData) {

@@ -1,5 +1,5 @@
 import dynamic from "next/dynamic";
-import { fetchDailyModelBreakdown } from "@/lib/dashboard/queries";
+import { fetchDailyModelBreakdown, getTimeRangeFromCookies } from "@/lib/dashboard/queries";
 
 export const revalidate = 300;
 
@@ -13,6 +13,7 @@ const ModelPieChart = dynamic(
 );
 
 export default async function ModelsPanel() {
-  const data = await fetchDailyModelBreakdown("7d");
+  const timeRange = await getTimeRangeFromCookies();
+  const data = await fetchDailyModelBreakdown(timeRange);
   return <ModelPieChart data={data} />;
 }

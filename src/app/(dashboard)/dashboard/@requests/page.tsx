@@ -1,5 +1,5 @@
 import dynamic from "next/dynamic";
-import { fetchRequestVolume } from "@/lib/dashboard/queries";
+import { fetchRequestVolume, getTimeRangeFromCookies } from "@/lib/dashboard/queries";
 
 export const revalidate = 300;
 
@@ -13,6 +13,7 @@ const RequestVolumeChart = dynamic(
 );
 
 export default async function RequestsPanel() {
-  const data = await fetchRequestVolume("7d");
+  const timeRange = await getTimeRangeFromCookies();
+  const data = await fetchRequestVolume(timeRange);
   return <RequestVolumeChart data={data} />;
 }

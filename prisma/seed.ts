@@ -40,7 +40,7 @@ function pickModel(): ModelEntry {
     cumulative += m.weight;
     if (r < cumulative) return m;
   }
-  return MODELS[MODELS.length - 1];
+  return MODELS[MODELS.length - 1]!;
 }
 
 // Business-hours weighted hour selection

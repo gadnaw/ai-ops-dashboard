@@ -28,9 +28,11 @@ export function RealtimeFeed() {
         (payload) => {
           const eventType = (payload.new as { event_type?: string }).event_type;
 
-          if (eventType === "refresh_complete") {
+          if (eventType === "refresh_complete" || eventType === "fallback_occurred") {
             // M13: Use router.refresh() on Realtime event, not ISR revalidation alone.
             // This tells Next.js to re-fetch from the server, bypassing ISR cache.
+            // Handle both refresh_complete (pg_cron cycle) and fallback_occurred (live fallback events)
+            // to meet the <30s Realtime update criterion.
             router.refresh();
             setLastRefresh(new Date());
           }

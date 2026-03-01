@@ -1,5 +1,5 @@
 import dynamic from "next/dynamic";
-import { fetchCostSummary } from "@/lib/dashboard/queries";
+import { fetchCostSummary, getTimeRangeFromCookies } from "@/lib/dashboard/queries";
 
 export const revalidate = 300;
 
@@ -13,6 +13,7 @@ const CostTrendChart = dynamic(
 );
 
 export default async function CostPanel() {
-  const data = await fetchCostSummary("7d");
+  const timeRange = await getTimeRangeFromCookies();
+  const data = await fetchCostSummary(timeRange);
   return <CostTrendChart data={data} />;
 }
