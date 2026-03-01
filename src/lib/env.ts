@@ -11,9 +11,10 @@ export const env = createEnv({
     // Auth secret for JWT signing
     NEXTAUTH_SECRET: z.string().min(32).optional(),
     // LLM Provider API Keys (SERVER ONLY — never prefix with NEXT_PUBLIC_)
-    OPENAI_API_KEY: z.string().min(1),
-    ANTHROPIC_API_KEY: z.string().min(1),
-    GOOGLE_GENERATIVE_AI_API_KEY: z.string().min(1),
+    // Optional for demo: dashboard works without them; model router degrades gracefully
+    OPENAI_API_KEY: z.string().min(1).optional(),
+    ANTHROPIC_API_KEY: z.string().min(1).optional(),
+    GOOGLE_GENERATIVE_AI_API_KEY: z.string().min(1).optional(),
   },
   client: {
     // Supabase public keys (anon key is safe to expose — RLS enforced)
