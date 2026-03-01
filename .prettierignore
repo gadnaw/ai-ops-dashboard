@@ -1,0 +1,6 @@
+# Generated files
+.next/
+node_modules/
+prisma/migrations/
+*.md
+pnpm-lock.yaml
