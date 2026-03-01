@@ -114,7 +114,7 @@ Plans:
 
 **Requirements:** PROMPT-01, DX-01
 
-**Research flag:** `standard` — Prompt versioning CRUD with diff view is a solved problem (immutable snapshot pattern, established diff libraries). Streaming playground is a standard chat UI pattern via Vercel AI SDK `useChat`.
+**Research flag:** `standard` — Prompt versioning CRUD with diff view is a solved problem (immutable snapshot pattern, established diff libraries). Streaming playground is a standard chat UI pattern via Vercel AI SDK `useCompletion`.
 
 **Pitfall mitigations built in:**
 - Pitfall 6 (streaming format inconsistency): Vercel AI SDK `streamText()` normalizes OpenAI / Anthropic / Google streaming formats automatically. No custom SSE parsers needed. Token usage reporting (input/output/cached) extracted from the SDK's unified response object.
@@ -127,12 +127,12 @@ Plans:
 4. The request playground sends a message to any configured model/prompt combination, streams the response token-by-token with a live token counter, and the completed request appears in the dashboard's request log (proving playground requests flow through the production tracking pipeline).
 5. All playground requests go through API routes — no LLM API keys appear in client-side JavaScript or browser network requests to external provider endpoints.
 
-**Plans:** TBD
+**Plans:** 3 plans
 
 Plans:
-- [ ] 03-01: Prompt manager service — `prompt_versions` table with immutable snapshots, `variables` JSONB column for extracted `{{var}}` names, version selection in model router, rollback API endpoint
-- [ ] 03-02: Prompt UI — version list (Server Component), diff view (Client Island, character-level), create/rollback actions, prompt version filter in dashboard charts
-- [ ] 03-03: Playground — streaming chat UI via Vercel AI SDK `useChat`, live token counter, model/prompt/parameter selectors, request logged through production pipeline, raw API response view for token count verification
+- [ ] 03-01-PLAN.md — Prompt manager service: `prompt_templates` + `prompt_versions` tables with immutable snapshot trigger, `variables` JSONB extraction, per-template auto-increment via PostgreSQL trigger + advisory lock, FK constraint on `request_logs.prompt_version_id`, rollback Server Action + REST API, version-aware `/api/v1/chat` route
+- [ ] 03-02-PLAN.md — Prompt UI: version list Server Component with `useOptimistic` rollback (VersionList), side-by-side character-level diff (DiffViewer + jsdiff), CodeMirror 6 editor with `{{variable}}` highlighting (PromptEditor, SSR-safe via dynamic import), create/rollback forms, prompt version filter on dashboard @requests slot
+- [ ] 03-03-PLAN.md — Playground: streaming UI via `useCompletion` (single-turn, NOT useChat), live token counter via `gpt-tokenizer` (pure JS), model/prompt/parameter selectors, variable interpolation before send, requests logged through production pipeline with `prompt_version_id`, deep-link from `/prompts/[slug]` via `?promptVersionId=ID`
 
 ---
 
@@ -242,7 +242,7 @@ These requirements are documented but NOT mapped to any phase in this milestone.
 |-------|------|----------------|--------|-----------|
 | 1 | Foundation | 0/3 | Not started | — |
 | 2 | Working Demo | 0/4 | Planned | — |
-| 3 | Prompt Management + Playground | 0/3 | Not started | — |
+| 3 | Prompt Management + Playground | 0/3 | Planned | — |
 | 4 | Reliability + Differentiators | 0/3 | Not started | — |
 | 5 | Evaluation + Alerts | 0/3 | Not started | — |
 
@@ -265,11 +265,12 @@ These are confirmed decisions from research that constrain all phases. Do not re
 | Pricing as database table, not constants | Pitfall 7 — updatable without deployment when providers change rates | 2 |
 | SPRT for A/B auto-stop (not repeated t-tests) | Fixed-sample tests do not support early stopping without peeking bias inflation | 4 |
 | Google model IDs updated: gemini-2.5-flash + gemini-2.0-flash | gemini-1.5-pro and gemini-1.5-flash discontinued September 24, 2025. Intent preserved: cheap flash tier + capable tier from Google | 2, 3, 4, 5 |
+| useCompletion (not useChat) for playground | Single-turn prompt-in/completion-out pattern — useChat manages conversation history which playground does not need | 3 |
 
 ---
 
-*Roadmap version: 1.1*
+*Roadmap version: 1.2*
 *Created: 2026-03-01*
-*Updated: 2026-03-01 (Phase 2 plans finalized)*
+*Updated: 2026-03-01 (Phase 3 plans finalized)*
 *Milestone: Portfolio Demo*
 *Coverage: 12/12 active requirements mapped, 3 deferred*
