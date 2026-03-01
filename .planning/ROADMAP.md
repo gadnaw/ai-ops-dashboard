@@ -158,12 +158,12 @@ Plans:
 4. When one variant reaches statistical significance at 95% confidence (via SPRT sequential test), the A/B test auto-stops; the dashboard displays the winning variant, the confidence level, effect size, and per-variant breakdown (latency, cost, error rate).
 5. A user can manually stop an A/B test at any time and promote the winning variant to the primary prompt version with one click.
 
-**Plans:** TBD
+**Plans:** 3 plans
 
 Plans:
-- [ ] 04-01: Rate limiter — PostgreSQL token-bucket behind `RateLimiter` interface, four-stage degradation chain (queue → fallback → cache → 429), `Retry-After` header, all degradation events logged to `rate_limit_events` table
-- [ ] 04-02: Degradation visualization — timeline view component, fallback event markers on dashboard request volume chart, per-request degradation chain detail view
-- [ ] 04-03: A/B testing framework — traffic split router, per-variant metrics accumulation, SPRT sequential significance calculator (research-informed), auto-stop at 95% confidence, minimum sample size guard (200+ per variant), A/B test management UI (create, monitor, stop, promote)
+- [ ] 04-01-PLAN.md — Rate Limiter: PostgreSQL token-bucket behind `RateLimiter` interface, PL/pgSQL `check_rate_limit()` function, four-stage degradation chain (queue → fallback model → cached response → 429), `rate_limit_buckets` + `rate_limit_events` + `response_cache` tables, `Retry-After` header, all degradation events logged
+- [ ] 04-02-PLAN.md — Degradation Visualization: `getDegradationEvents()` + `groupIntoChains()` query layer, `GET /api/v1/degradation` REST endpoint, DegradationTimeline Recharts Gantt chart (vertical stacked-bar), DegradationEventList + StageDetailPanel, `/dashboard/degradation` page
+- [ ] 04-03-PLAN.md — A/B Testing Framework: `experiments` + `experiment_variants` + `variant_metrics` + `sprt_history` tables, FNV-1a deterministic traffic split, SPRT engine (Wald boundaries α=0.05 β=0.20), accumulator metrics (latency_sum/sum_sq/n), auto-stop at 95% confidence, ExperimentControls + SPRTChart + VariantMetricsTable UI, `/dashboard/experiments` pages
 
 ---
 
@@ -243,7 +243,7 @@ These requirements are documented but NOT mapped to any phase in this milestone.
 | 1 | Foundation | 0/3 | Not started | — |
 | 2 | Working Demo | 0/4 | Planned | — |
 | 3 | Prompt Management + Playground | 0/3 | Planned | — |
-| 4 | Reliability + Differentiators | 0/3 | Not started | — |
+| 4 | Reliability + Differentiators | 0/3 | Planned | — |
 | 5 | Evaluation + Alerts | 0/3 | Not started | — |
 
 ---
@@ -271,6 +271,6 @@ These are confirmed decisions from research that constrain all phases. Do not re
 
 *Roadmap version: 1.2*
 *Created: 2026-03-01*
-*Updated: 2026-03-01 (Phase 3 plans finalized)*
+*Updated: 2026-03-01 (Phase 4 plans finalized)*
 *Milestone: Portfolio Demo*
 *Coverage: 12/12 active requirements mapped, 3 deferred*
