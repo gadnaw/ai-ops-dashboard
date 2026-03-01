@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getSession } from "@/lib/auth/session";
 import { signOut } from "@/lib/auth/actions";
 
@@ -10,13 +11,19 @@ export async function Nav() {
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center gap-6">
             <span className="font-bold text-gray-900">AI Ops Dashboard</span>
-            <a href="/dashboard" className="text-sm text-gray-500 hover:text-gray-900">
+            <Link href="/dashboard" className="text-sm text-gray-500 hover:text-gray-900">
               Dashboard
-            </a>
+            </Link>
+            <Link href="/prompts" className="text-sm text-gray-500 hover:text-gray-900">
+              Prompts
+            </Link>
+            <Link href="/playground" className="text-sm text-gray-500 hover:text-gray-900">
+              Playground
+            </Link>
             {session && (
-              <a href="/config" className="text-sm text-gray-500 hover:text-gray-900">
+              <Link href="/config" className="text-sm text-gray-500 hover:text-gray-900">
                 Config
-              </a>
+              </Link>
             )}
           </div>
 
@@ -33,9 +40,9 @@ export async function Nav() {
               </form>
             </div>
           ) : (
-            <a href="/login" className="text-sm font-medium text-gray-900 hover:underline">
+            <Link href="/login" className="text-sm font-medium text-gray-900 hover:underline">
               Sign in
-            </a>
+            </Link>
           )}
         </div>
       </div>

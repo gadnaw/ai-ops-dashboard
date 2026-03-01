@@ -162,6 +162,7 @@ export async function POST(request: NextRequest) {
     }
   });
 
-  // H4: toUIMessageStreamResponse() — verified compatible with useCompletion in Phase 3.
-  return streamResult.toUIMessageStreamResponse();
+  // H4: toTextStreamResponse() — compatible with useCompletion({ streamProtocol: 'text' }).
+  // PlaygroundForm uses streamProtocol: 'text' so we return a plain text stream here.
+  return streamResult.toTextStreamResponse();
 }
