@@ -6,21 +6,21 @@
 
 ## Current Position
 
-**Status:** Phase 2 in progress — 2/4 plans done
+**Status:** Phase 2 in progress — 3/4 plans done
 **Phase:** Phase 2 — Working Demo (in progress)
-**Plan:** 02-02 complete
+**Plan:** 02-03 complete
 **Task:** —
-**Last activity:** 2026-03-01 — Completed 02-02 Model Router (3/3 tasks)
+**Last activity:** 2026-03-01 — Completed 02-03 Dashboard UI (3/3 tasks)
 
 ## Progress
 
 ```
 Phase 1 █████ 3/3 plans complete
-Phase 2 ██░░░ 2/4 plans complete
+Phase 2 ███░░ 3/4 plans complete
 Phase 3 ░░░░░ 0/3 plans complete
 Phase 4 ░░░░░ 0/3 plans complete
 Phase 5 ░░░░░ 0/3 plans complete
-Overall: 5/16 plans complete (31%)
+Overall: 6/16 plans complete (38%)
 ```
 
 ### Milestone Progress
@@ -49,7 +49,7 @@ Overall: 5/16 plans complete (31%)
 |------|--------|-------|-------------|
 | 02-01 Data Layer | Complete | 3/3 | 5feb694 |
 | 02-02 Model Router | Complete | 3/3 | 75ab9dc |
-| 02-03 Dashboard UI | Planned | — | — |
+| 02-03 Dashboard UI | Complete | 3/3 | 10d4ea9 |
 | 02-04 Config+Seed | Planned | — | — |
 
 ## Accumulated Decisions
@@ -110,6 +110,15 @@ Key architectural decisions locked at roadmap creation. These do NOT need re-eva
 - **Prisma optional fields: null not undefined:** All optional Prisma fields use `?? null` coercion in logRequest() — Prisma optional fields are `string | null`, not `string | undefined`.
 - **cachedTokens from inputTokenDetails.cacheReadTokens:** AI SDK 6 caches token count accessed via `usage.inputTokenDetails?.cacheReadTokens` (not a top-level `cachedTokens` property).
 
+### Decisions from 02-03
+
+- **Dashboard route restructure:** `(dashboard)/page.tsx` is at URL `/` (not `/dashboard`) because route groups add no URL segment. Real dashboard at `(dashboard)/dashboard/page.tsx` → URL `/dashboard`. Old placeholder replaced with redirect.
+- **Middleware public dashboard:** `/dashboard` removed from `isProtectedRoute`. Dashboard is read-only public access. API routes, settings, prompts, playground remain protected.
+- **Prisma.sql for dynamic fragments:** Dynamic SQL clauses (provider filter) use `Prisma.sql` template tags + `Prisma.empty` for no-op case. `$queryRaw` called in function form `prisma.$queryRaw(Prisma.sql\`...\`)` to allow fragment interpolation. Nested `$queryRaw` is prohibited.
+- **Latency panel aggregation:** `fetchLatencyPercentiles` returns per-provider rows. `@latency/page.tsx` averages p50/p95/p99 across providers per bucket before passing to LatencyChart (which shows system-level trend, not per-provider).
+- **Dynamic import ssr:false pattern:** All 4 Recharts chart components dynamically imported with `ssr: false` in slot pages to prevent ResponsiveContainer zero-dimension SSR failure.
+- **Zustand skipHydration:** `persist({ skipHydration: true })` in dashboard-filter store. FilterBar calls `useDashboardFilterStore.persist.rehydrate()` in `useEffect` to avoid SSR/client mismatch.
+
 ## Blockers
 
 No current blockers.
@@ -140,13 +149,13 @@ See: `.planning/PROJECT.md` (updated 2026-03-01)
 ## Session Continuity
 
 **Last session:** 2026-03-01
-**Stopped at:** Completed 02-02-PLAN.md (3/3 tasks)
-**Resume file:** None — continue with Phase 2 Plan 02-03
+**Stopped at:** Completed 02-03-PLAN.md (3/3 tasks)
+**Resume file:** None — continue with Phase 2 Plan 02-04
 
 ## Next Steps
 
-**Recommended:** Execute Phase 2 Plan 02-03 (Dashboard UI)
-**Command:** `/gsd:execute-phase 2` (plan 02-03)
+**Recommended:** Execute Phase 2 Plan 02-04 (Config + Seed)
+**Command:** `/gsd:execute-phase 2` (plan 02-04)
 
 **Key handoff context for Phase 2 remaining plans:**
 - Database schema: apply migrations manually via Supabase SQL Editor (see 02-01-SUMMARY.md)
@@ -156,6 +165,12 @@ See: `.planning/PROJECT.md` (updated 2026-03-01)
 - Registry: `import { registry } from '@/lib/model-router/registry'`
 - Logger: `import { logRequest } from '@/lib/logging/request-logger'` — only call from after() callbacks
 - Materialized views: NEVER query request_logs directly in dashboard slots — use hourly_cost_summary, hourly_latency_percentiles, daily_model_breakdown
+- Dashboard is PUBLIC: /dashboard has no requireAuth — middleware updated, (dashboard)/layout.tsx is passthrough
+- Dashboard queries: `import { fetchCostSummary, fetchLatencyPercentiles, fetchDailyModelBreakdown, fetchRequestVolume } from '@/lib/dashboard/queries'`
+- Filter store: `import { useDashboardFilterStore } from '@/stores/dashboard-filter'`
+- Chart components: `import { CostTrendChart, LatencyChart, ModelPieChart, RequestVolumeChart } from '@/components/charts'`
+- Dynamic import pattern: `import dynamic from 'next/dynamic'` with `ssr: false` for all Recharts wrappers
+- Prisma.sql pattern: use `Prisma.sql` + `Prisma.empty` for dynamic SQL fragments (no nested $queryRaw)
 - Token properties: `usage.inputTokens`, `usage.outputTokens`, `usage.inputTokenDetails.cacheReadTokens`
 - maxOutputTokens: AI SDK 6 renamed maxTokens to maxOutputTokens in streamText()
 - Optional fields: use conditional spread `...(val ? { key: val } : {})` not `val: undefined`
