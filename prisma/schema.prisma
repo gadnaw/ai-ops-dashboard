@@ -83,7 +83,9 @@ model RequestLog {
   sessionId       String?   @map("session_id") @db.Uuid  // COMP-01 deferred, column present
   createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
 
-  promptVersion   PromptVersion? @relation(fields: [promptVersionId], references: [id])
+  promptVersion    PromptVersion?    @relation(fields: [promptVersionId], references: [id])
+  // NOTE: No evaluationJobs/evaluationScores relations here — those tables
+  // cannot have FK constraints to partitioned request_logs. Use raw queries instead.
 
   @@index([createdAt, provider, model], name: "request_logs_provider_model_idx")
   @@index([createdAt, costUsd], name: "request_logs_cost_idx")         // M7: Phase 5 alert queries
@@ -354,5 +356,84 @@ model ResponseCache {
   @@unique([promptHash, model])
   @@index([expiresAt], name: "response_cache_expires_idx")
   @@map("response_cache")
+}
+
+// ----- EVALUATION (Phase 5) -----
+// LLM-as-judge evaluation pipeline.
+// Rubrics define scoring dimensions; jobs queue requests for evaluation;
+// scores store judge output with dimension breakdown and human review flags.
+//
+// Analysis constraint C7: evaluation_scores.created_at is REQUIRED.
+// Analysis constraint M11: FNV-1a used for sampling (not Math.random()).
+
+model EvaluationRubric {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String
+  description String   @default("")
+  // JSONB array of dimension objects: [{ id, name, description, weight, anchors }]
+  dimensions  Json
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  jobs        EvaluationJob[]
+  scores      EvaluationScore[]
+
+  @@map("evaluation_rubrics")
+}
+
+model EvaluationJob {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  // NOTE: no Prisma relation to RequestLog — request_logs is partitioned and does not
+  // support FK constraints referencing only id (composite PK includes created_at).
+  // Application-layer integrity enforced instead.
+  requestId    String    @map("request_id") @db.Uuid
+  rubricId     String    @map("rubric_id") @db.Uuid
+  status       String    @default("pending") // pending | in_progress | completed | failed
+  attemptCount Int       @default(0) @map("attempt_count")
+  lastError    String?   @map("last_error")
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  startedAt    DateTime? @map("started_at") @db.Timestamptz
+  completedAt  DateTime? @map("completed_at") @db.Timestamptz
+
+  rubric       EvaluationRubric @relation(fields: [rubricId], references: [id])
+  score        EvaluationScore?
+
+  @@index([status, createdAt], name: "idx_eval_jobs_status_created")
+  @@map("evaluation_jobs")
+}
+
+model EvaluationScore {
+  id                      String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  // NOTE: no Prisma relation to RequestLog — request_logs is partitioned and does not
+  // support FK constraints referencing only id (composite PK includes created_at).
+  // Application-layer integrity enforced instead.
+  requestId               String    @map("request_id") @db.Uuid
+  rubricId                String    @map("rubric_id") @db.Uuid
+  jobId                   String    @unique @map("job_id") @db.Uuid
+  judgeModel              String    @default("gpt-4o") @map("judge_model")
+  // JSONB: { "accuracy": 4, "coherence": 3, "safety": 5 }
+  dimensionScores         Json      @map("dimension_scores")
+  overallScore            Decimal   @map("overall_score") @db.Decimal(3, 2)
+  reasoning               String
+  flags                   String[]  @default([])
+  requiresHumanReview     Boolean   @default(false) @map("requires_human_review")
+  humanReviewed           Boolean   @default(false) @map("human_reviewed")
+  humanReviewerId         String?   @map("human_reviewer_id") @db.Uuid
+  humanReviewNotes        String?   @map("human_review_notes")
+  // JSONB: { "accuracy": 3, "coherence": 4 } — only overridden dimensions
+  humanDimensionOverrides Json?     @map("human_dimension_overrides")
+  // overall_score if not human-reviewed; human-computed weighted avg if reviewed
+  finalScore              Decimal?  @map("final_score") @db.Decimal(3, 2)
+  finalScoredAt           DateTime? @map("final_scored_at") @db.Timestamptz
+  // REQUIRED by ANALYSIS-REPORT constraint C7
+  createdAt               DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  rubric   EvaluationRubric @relation(fields: [rubricId], references: [id])
+  job      EvaluationJob    @relation(fields: [jobId], references: [id])
+
+  @@index([requestId], name: "idx_eval_scores_request")
+  @@index([requiresHumanReview, humanReviewed], name: "idx_eval_scores_review")
+  @@map("evaluation_scores")
 }
 
