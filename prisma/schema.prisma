@@ -50,7 +50,8 @@ model ApiKey {
   createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
   updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz
 
-  profile        Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profile         Profile          @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  rateLimitEvents RateLimitEvent[]
 
   @@index([profileId])
   @@index([keyHash])
@@ -179,4 +180,64 @@ model PromptVersion {
   @@map("prompt_versions")
 }
 
+// ----- RATE LIMITING -----
+// Token bucket state per API key bucket (one row per bucket type per key).
+// Bucket ID format: "apikey:{api_key_id}:rpm" | "apikey:{api_key_id}:tpm"
+// Managed entirely via the check_rate_limit() PL/pgSQL function.
+model RateLimitBucket {
+  id          String   @id  // composite key e.g. "apikey:{uuid}:rpm"
+  tokens      Float         // current token count (can be fractional)
+  lastRefill  DateTime @map("last_refill") @db.Timestamptz
+  capacity    Int           // max tokens (burst limit)
+  refillRate  Float    @map("refill_rate")  // tokens per second
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@map("rate_limit_buckets")
+}
+
+// Degradation event audit log — one row per stage transition per request.
+// stage values: 1=queued, 2=fallback_model, 3=cached_response, 4=rejected_429
+model RateLimitEvent {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  apiKeyId       String   @map("api_key_id") @db.Uuid
+  requestLogId   String?  @map("request_log_id") @db.Uuid  // nullable — may not exist yet
+  stage          Int      // 1-4
+  stageName      String   @map("stage_name")  // 'queued' | 'fallback_model' | 'cached_response' | 'rejected_429'
+  reason         String   // human-readable reason e.g. "rpm_limit_exceeded"
+  bucketId       String   @map("bucket_id")   // which bucket triggered this
+  tokensAtEvent  Float?   @map("tokens_at_event")   // snapshot for debugging
+  queuedMs       Int?     @map("queued_ms")   // stage 1: ms spent in queue
+  fallbackModel  String?  @map("fallback_model")  // stage 2: model used
+  cacheHitKey    String?  @map("cache_hit_key")  // stage 3: prompt hash
+  retryAfterSec  Int?     @map("retry_after_sec")  // stage 4: Retry-After value
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  apiKey         ApiKey   @relation(fields: [apiKeyId], references: [id])
+
+  @@index([apiKeyId, createdAt(sort: Desc)])
+  @@index([stage, createdAt(sort: Desc)])
+  @@map("rate_limit_events")
+}
+
+// Response cache for Stage 3 degradation.
+// Populated async via after() on every successful LLM response.
+// Looked up by SHA-256 hash of normalized prompt text + model ID.
+// H10: This table is new in Phase 4; population logic goes in /api/v1/chat (Phase 2 code).
+model ResponseCache {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  promptHash   String    @map("prompt_hash")  // SHA-256 of normalized prompt
+  model        String                          // model ID that produced this response
+  responseText String    @map("response_text") @db.Text
+  inputTokens  Int?      @map("input_tokens")
+  outputTokens Int?      @map("output_tokens")
+  costUsd      Decimal?  @map("cost_usd") @db.Decimal(10, 6)
+  hitCount     Int       @default(0) @map("hit_count")
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  lastUsedAt   DateTime  @default(now()) @map("last_used_at") @db.Timestamptz
+  expiresAt    DateTime? @map("expires_at") @db.Timestamptz  // optional TTL
+
+  @@unique([promptHash, model])
+  @@index([expiresAt], name: "response_cache_expires_idx")
+  @@map("response_cache")
+}
 
