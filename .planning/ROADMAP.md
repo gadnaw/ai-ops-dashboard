@@ -22,7 +22,7 @@ This roadmap delivers a production-grade AI operations dashboard in five phases,
 - Decimal phases (2.1, 2.2): Urgent insertions created via `/gsd:insert-phase`
 
 - [x] **Phase 1: Foundation** — Clean scaffold with deployment pipeline and auth skeleton
-- [ ] **Phase 2: Working Demo** — Core value deployable to shareable URL with seed data
+- [x] **Phase 2: Working Demo** — Core value deployable to shareable URL with seed data
 - [ ] **Phase 3: Prompt Management + Playground** — Prompt versioning, diff view, rollback, and streaming playground
 - [ ] **Phase 4: Reliability + Differentiators** — Graceful degradation + A/B testing with statistical significance
 - [ ] **Phase 5: Evaluation + Alerts** — LLM-as-judge pipeline, human review queue, and anomaly alerting
@@ -99,10 +99,10 @@ Plans:
 **Plans:** 4 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — Data layer: `request_logs` partitioned table, materialized views (`hourly_cost_summary`, `hourly_latency_percentiles`, `daily_model_breakdown`), pg_cron refresh jobs, cost rate-card table, `dashboard_events` summary table, `endpoint_configs` table, cost calculator service
-- [ ] 02-02-PLAN.md — Model router: Vercel AI SDK `createProviderRegistry()`, OpenAI + Anthropic + Google providers, priority-based fallback chains with exponential backoff + jitter, `after()` fire-and-forget logging with full usage object parsing (including cached tokens via `usage.inputTokens`/`usage.outputTokens`)
-- [ ] 02-03-PLAN.md — Dashboard UI: App Router parallel routes (`@cost`, `@latency`, `@requests`, `@models`), Recharts 3.x charts (area/line/pie/bar), Supabase Realtime on `dashboard_events`, Zustand filter store (time range, model filter), skeleton loading states, connection status indicator, dynamic import with `ssr: false`
-- [ ] 02-04-PLAN.md — Config UI + seed data: Model config management UI (temperature, max tokens, system prompts per endpoint), `prisma/seed.ts` with modular `seedBaseData()` + day-15 cost spike, `pnpm db:seed` script, public dashboard middleware update
+- [x] 02-01-PLAN.md — Data layer: `request_logs` partitioned table, materialized views (`hourly_cost_summary`, `hourly_latency_percentiles`, `daily_model_breakdown`), pg_cron refresh jobs, cost rate-card table, `dashboard_events` summary table, `endpoint_configs` table, cost calculator service
+- [x] 02-02-PLAN.md — Model router: Vercel AI SDK `createProviderRegistry()`, OpenAI + Anthropic + Google providers, priority-based fallback chains with exponential backoff + jitter, `after()` fire-and-forget logging with full usage object parsing (including cached tokens via `usage.inputTokens`/`usage.outputTokens`)
+- [x] 02-03-PLAN.md — Dashboard UI: App Router parallel routes (`@cost`, `@latency`, `@requests`, `@models`), Recharts 3.x charts (area/line/pie/bar), Supabase Realtime on `dashboard_events`, Zustand filter store (time range, model filter), skeleton loading states, connection status indicator, dynamic import with `ssr: false`
+- [x] 02-04-PLAN.md — Config UI + seed data: Model config management UI (temperature, max tokens, system prompts per endpoint), `prisma/seed.ts` with modular `seedBaseData()` + day-15 cost spike, `pnpm db:seed` script, public dashboard middleware update
 
 ---
 
@@ -241,7 +241,7 @@ These requirements are documented but NOT mapped to any phase in this milestone.
 | Phase | Name | Plans Complete | Status | Completed |
 |-------|------|----------------|--------|-----------|
 | 1 | Foundation | 3/3 | Complete | 2026-03-01 |
-| 2 | Working Demo | 0/4 | Planned | — |
+| 2 | Working Demo | 4/4 | Complete | 2026-03-01 |
 | 3 | Prompt Management + Playground | 0/3 | Planned | — |
 | 4 | Reliability + Differentiators | 0/3 | Planned | — |
 | 5 | Evaluation + Alerts | 0/3 | Planned | — |
@@ -271,6 +271,6 @@ These are confirmed decisions from research that constrain all phases. Do not re
 
 *Roadmap version: 1.3*
 *Created: 2026-03-01*
-*Updated: 2026-03-01 (Phase 1 Foundation complete)*
+*Updated: 2026-03-01 (Phase 2 Working Demo complete)*
 *Milestone: Portfolio Demo*
 *Coverage: 12/12 active requirements mapped, 3 deferred*

@@ -96,10 +96,10 @@
 |--------|--------|--------|-------|-------|
 | AUTH-01 | User spec | Complete | Phase 1 | Foundation — Supabase Auth + RBAC skeleton |
 | SEC-01 | User spec | Complete | Phase 1 | Foundation — API key management, SHA-256 hashing |
-| INFRA-01 | User spec | Active | Phase 2 | Working Demo — Vercel AI SDK provider registry, fallback chains |
-| OBS-01 | User spec | Active | Phase 2 | Working Demo — fire-and-forget logging via after(), rate card table |
-| OBS-02 | User spec | Active | Phase 2 | Working Demo — materialized views, Recharts, dashboard_events Realtime |
-| CONFIG-01 | User spec | Active | Phase 2 | Working Demo — model config UI per endpoint |
+| INFRA-01 | User spec | Complete | Phase 2 | Working Demo — Vercel AI SDK provider registry, fallback chains |
+| OBS-01 | User spec | Complete | Phase 2 | Working Demo — fire-and-forget logging via after(), rate card table |
+| OBS-02 | User spec | Complete | Phase 2 | Working Demo — materialized views, Recharts, dashboard_events Realtime |
+| CONFIG-01 | User spec | Complete | Phase 2 | Working Demo — model config UI per endpoint |
 | PROMPT-01 | User spec | Active | Phase 3 | Prompt Management — immutable snapshots, diff view, rollback |
 | DX-01 | User spec | Active | Phase 3 | Prompt Management — streaming playground through production pipeline |
 | REL-01 | User spec | Active | Phase 4 | Reliability — PostgreSQL token bucket, 4-stage degradation, timeline viz |
