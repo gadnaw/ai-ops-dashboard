@@ -189,12 +189,12 @@ Plans:
 4. Each alert has acknowledge and resolve workflow states; an acknowledged alert stops re-firing during the cooldown window; a resolved alert is marked with a timestamp and resolver note.
 5. The dashboard shows evaluation score trends over time (per prompt version, per model) alongside the existing cost and latency charts, giving a single-screen view of cost + performance + quality.
 
-**Plans:** TBD
+**Plans:** 3 plans
 
 Plans:
-- [ ] 05-01: Evaluation service — judge LLM integration (configurable model), scoring rubric schema (multi-dimension 1-5), `evaluation_scores` table linked to `request_logs`, evaluation queue, automated trigger on request completion (configurable: all requests vs. sampled %)
-- [ ] 05-02: Human review queue — review queue UI (Server Component list, Client Island for score override), approve/override/note actions, disagreement threshold configuration, bulk review actions
-- [ ] 05-03: Alert engine — sliding-window threshold checks via pg_cron or Supabase scheduled functions, webhook dispatch with retry, configurable rules (metric, threshold, window, cooldown), acknowledge/resolve workflow, alert history in dashboard, seed data updated to include alert events
+- [ ] 05-01-PLAN.md — Evaluation service: `evaluation_rubrics` + `evaluation_jobs` + `evaluation_scores` tables, GPT-4o judge via `generateText` + `Output.object()`, FNV-1a deterministic 10% sampling trigger in `after()`, `FOR UPDATE SKIP LOCKED` job processor, variant_metrics eval column updates for A/B experiments, MSW-mocked Vitest tests
+- [ ] 05-02-PLAN.md — Human review queue: `/evaluation` overview page with EvalTrend Recharts chart, `/evaluation/review` Server Component queue with ReviewInteractionPanel Client Island, `approveScore`/`overrideScore` Server Actions (weighted final_score: accuracy 40%, coherence 30%, safety 30%), `GET /api/v1/evaluation/scores` endpoint
+- [ ] 05-03-PLAN.md — Alert engine: `alert_rules` + `alert_history` tables, `check_alert_rules()` PL/pgSQL function (duration_ms, cost_usd column names), pg_cron every-minute trigger via pg_net, HMAC-SHA256 webhook dispatch with 3-attempt retry, `/alerts` history page with acknowledge/resolve workflow, `/alerts/rules` CRUD, `seedEvaluationAndAlerts()` modular seed with day-15 incident story
 
 ---
 
@@ -244,7 +244,7 @@ These requirements are documented but NOT mapped to any phase in this milestone.
 | 2 | Working Demo | 0/4 | Planned | — |
 | 3 | Prompt Management + Playground | 0/3 | Planned | — |
 | 4 | Reliability + Differentiators | 0/3 | Planned | — |
-| 5 | Evaluation + Alerts | 0/3 | Not started | — |
+| 5 | Evaluation + Alerts | 0/3 | Planned | — |
 
 ---
 
@@ -269,8 +269,8 @@ These are confirmed decisions from research that constrain all phases. Do not re
 
 ---
 
-*Roadmap version: 1.2*
+*Roadmap version: 1.3*
 *Created: 2026-03-01*
-*Updated: 2026-03-01 (Phase 4 plans finalized)*
+*Updated: 2026-03-01 (Phase 5 plans finalized)*
 *Milestone: Portfolio Demo*
 *Coverage: 12/12 active requirements mapped, 3 deferred*
