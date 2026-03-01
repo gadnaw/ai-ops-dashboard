@@ -102,10 +102,10 @@
 | CONFIG-01 | User spec | Complete | Phase 2 | Working Demo — model config UI per endpoint |
 | PROMPT-01 | User spec | Complete | Phase 3 | Prompt Management — immutable snapshots, diff view, rollback |
 | DX-01 | User spec | Complete | Phase 3 | Prompt Management — streaming playground through production pipeline |
-| REL-01 | User spec | Active | Phase 4 | Reliability — PostgreSQL token bucket, 4-stage degradation, timeline viz |
-| PROMPT-02 | User spec | Active | Phase 4 | Differentiators — SPRT auto-stop, per-variant metrics, promote workflow |
-| EVAL-01 | User spec | Active | Phase 5 | Evaluation — judge LLM, scoring rubrics, human review queue |
-| ALERT-01 | User spec | Active | Phase 5 | Alerts — sliding-window checks, webhook dispatch, ack/resolve workflow |
+| REL-01 | User spec | Complete | Phase 4 | Reliability — PostgreSQL token bucket, 4-stage degradation, timeline viz |
+| PROMPT-02 | User spec | Complete | Phase 4 | Differentiators — SPRT auto-stop, per-variant metrics, promote workflow |
+| EVAL-01 | User spec | Complete | Phase 5 | Evaluation — judge LLM, scoring rubrics, human review queue |
+| ALERT-01 | User spec | Complete | Phase 5 | Alerts — sliding-window checks, webhook dispatch, ack/resolve workflow |
 | EVAL-02 | User spec | Deferred | — | Lower demo ROI; batch job orchestration adds significant complexity |
 | COMP-01 | User spec | Deferred | — | Important for production; session_id col captured in schema for future use |
 | REPORT-01 | User spec | Deferred | — | Mechanical feature; trivially addable when a client specifically requests it |

@@ -24,8 +24,8 @@ This roadmap delivers a production-grade AI operations dashboard in five phases,
 - [x] **Phase 1: Foundation** — Clean scaffold with deployment pipeline and auth skeleton
 - [x] **Phase 2: Working Demo** — Core value deployable to shareable URL with seed data
 - [x] **Phase 3: Prompt Management + Playground** — Prompt versioning, diff view, rollback, and streaming playground
-- [ ] **Phase 4: Reliability + Differentiators** — Graceful degradation + A/B testing with statistical significance
-- [ ] **Phase 5: Evaluation + Alerts** — LLM-as-judge pipeline, human review queue, and anomaly alerting
+- [x] **Phase 4: Reliability + Differentiators** — Graceful degradation + A/B testing with statistical significance
+- [x] **Phase 5: Evaluation + Alerts** — LLM-as-judge pipeline, human review queue, and anomaly alerting
 
 ---
 
@@ -161,9 +161,9 @@ Plans:
 **Plans:** 3 plans
 
 Plans:
-- [ ] 04-01-PLAN.md — Rate Limiter: PostgreSQL token-bucket behind `RateLimiter` interface, PL/pgSQL `check_rate_limit()` function, four-stage degradation chain (queue → fallback model → cached response → 429), `rate_limit_buckets` + `rate_limit_events` + `response_cache` tables, `Retry-After` header, all degradation events logged
-- [ ] 04-02-PLAN.md — Degradation Visualization: `getDegradationEvents()` + `groupIntoChains()` query layer, `GET /api/v1/degradation` REST endpoint, DegradationTimeline Recharts Gantt chart (vertical stacked-bar), DegradationEventList + StageDetailPanel, `/dashboard/degradation` page
-- [ ] 04-03-PLAN.md — A/B Testing Framework: `experiments` + `experiment_variants` + `variant_metrics` + `sprt_history` tables, FNV-1a deterministic traffic split, SPRT engine (Wald boundaries α=0.05 β=0.20), accumulator metrics (latency_sum/sum_sq/n), auto-stop at 95% confidence, ExperimentControls + SPRTChart + VariantMetricsTable UI, `/dashboard/experiments` pages
+- [x] 04-01-PLAN.md — Rate Limiter: PostgreSQL token-bucket behind `RateLimiter` interface, PL/pgSQL `check_rate_limit()` function, four-stage degradation chain (queue → fallback model → cached response → 429), `rate_limit_buckets` + `rate_limit_events` + `response_cache` tables, `Retry-After` header, all degradation events logged
+- [x] 04-02-PLAN.md — Degradation Visualization: `getDegradationEvents()` + `groupIntoChains()` query layer, `GET /api/v1/degradation` REST endpoint, DegradationTimeline Recharts Gantt chart (vertical stacked-bar), DegradationEventList + StageDetailPanel, `/dashboard/degradation` page
+- [x] 04-03-PLAN.md — A/B Testing Framework: `experiments` + `experiment_variants` + `variant_metrics` + `sprt_history` tables, FNV-1a deterministic traffic split, SPRT engine (Wald boundaries α=0.05 β=0.20), accumulator metrics (latency_sum/sum_sq/n), auto-stop at 95% confidence, ExperimentControls + SPRTChart + VariantMetricsTable UI, `/dashboard/experiments` pages
 
 ---
 
@@ -192,9 +192,9 @@ Plans:
 **Plans:** 3 plans
 
 Plans:
-- [ ] 05-01-PLAN.md — Evaluation service: `evaluation_rubrics` + `evaluation_jobs` + `evaluation_scores` tables, GPT-4o judge via `generateText` + `Output.object()`, FNV-1a deterministic 10% sampling trigger in `after()`, `FOR UPDATE SKIP LOCKED` job processor, variant_metrics eval column updates for A/B experiments, MSW-mocked Vitest tests
-- [ ] 05-02-PLAN.md — Human review queue: `/evaluation` overview page with EvalTrend Recharts chart, `/evaluation/review` Server Component queue with ReviewInteractionPanel Client Island, `approveScore`/`overrideScore` Server Actions (weighted final_score: accuracy 40%, coherence 30%, safety 30%), `GET /api/v1/evaluation/scores` endpoint
-- [ ] 05-03-PLAN.md — Alert engine: `alert_rules` + `alert_history` tables, `check_alert_rules()` PL/pgSQL function (duration_ms, cost_usd column names), pg_cron every-minute trigger via pg_net, HMAC-SHA256 webhook dispatch with 3-attempt retry, `/alerts` history page with acknowledge/resolve workflow, `/alerts/rules` CRUD, `seedEvaluationAndAlerts()` modular seed with day-15 incident story
+- [x] 05-01-PLAN.md — Evaluation service: `evaluation_rubrics` + `evaluation_jobs` + `evaluation_scores` tables, GPT-4o judge via `generateText` + `Output.object()`, FNV-1a deterministic 10% sampling trigger in `after()`, `FOR UPDATE SKIP LOCKED` job processor, variant_metrics eval column updates for A/B experiments, MSW-mocked Vitest tests
+- [x] 05-02-PLAN.md — Human review queue: `/evaluation` overview page with EvalTrend Recharts chart, `/evaluation/review` Server Component queue with ReviewInteractionPanel Client Island, `approveScore`/`overrideScore` Server Actions (weighted final_score: accuracy 40%, coherence 30%, safety 30%), `GET /api/v1/evaluation/scores` endpoint
+- [x] 05-03-PLAN.md — Alert engine: `alert_rules` + `alert_history` tables, `check_alert_rules()` PL/pgSQL function (duration_ms, cost_usd column names), pg_cron every-minute trigger via pg_net, HMAC-SHA256 webhook dispatch with 3-attempt retry, `/alerts` history page with acknowledge/resolve workflow, `/alerts/rules` CRUD, `seedEvaluationAndAlerts()` modular seed with day-15 incident story
 
 ---
 
@@ -216,16 +216,16 @@ These requirements are documented but NOT mapped to any phase in this milestone.
 |--------|-------------|-------|--------|
 | AUTH-01 | Supabase Auth with RBAC (Admin/Developer/Viewer), RLS enforcement | Phase 1 | Complete |
 | SEC-01 | API key management with per-key usage tracking, SHA-256 hashing, rotation | Phase 1 | Complete |
-| INFRA-01 | Multi-model routing with fallback chains (OpenAI, Claude, Gemini) | Phase 2 | Pending |
-| OBS-01 | Per-request cost and latency tracking with breakdown by model/prompt/endpoint | Phase 2 | Pending |
-| OBS-02 | Real-time dashboard (cost trends, latency p50/p95/p99, error rates) via Recharts | Phase 2 | Pending |
-| CONFIG-01 | Model configuration UI for temperature, max tokens, system prompts | Phase 2 | Pending |
+| INFRA-01 | Multi-model routing with fallback chains (OpenAI, Claude, Gemini) | Phase 2 | Complete |
+| OBS-01 | Per-request cost and latency tracking with breakdown by model/prompt/endpoint | Phase 2 | Complete |
+| OBS-02 | Real-time dashboard (cost trends, latency p50/p95/p99, error rates) via Recharts | Phase 2 | Complete |
+| CONFIG-01 | Model configuration UI for temperature, max tokens, system prompts | Phase 2 | Complete |
 | PROMPT-01 | Prompt version control with named versions, diff view, rollback | Phase 3 | Complete |
 | DX-01 | Request playground with streaming and live token counter | Phase 3 | Complete |
-| REL-01 | Token-bucket rate limiting with 4-stage graceful degradation | Phase 4 | Pending |
-| PROMPT-02 | A/B testing with statistical significance and auto-stop at 95% confidence | Phase 4 | Pending |
-| EVAL-01 | Evaluation pipeline with judge LLM + human review queue + rubrics | Phase 5 | Pending |
-| ALERT-01 | Webhook anomaly alerts with configurable rules and cooldown | Phase 5 | Pending |
+| REL-01 | Token-bucket rate limiting with 4-stage graceful degradation | Phase 4 | Complete |
+| PROMPT-02 | A/B testing with statistical significance and auto-stop at 95% confidence | Phase 4 | Complete |
+| EVAL-01 | Evaluation pipeline with judge LLM + human review queue + rubrics | Phase 5 | Complete |
+| ALERT-01 | Webhook anomaly alerts with configurable rules and cooldown | Phase 5 | Complete |
 | EVAL-02 | Batch evaluation against test datasets | **Deferred** | Not in scope |
 | COMP-01 | PII redaction with configurable retention policies | **Deferred** | Not in scope |
 | REPORT-01 | Export CSV/JSON | **Deferred** | Not in scope |
@@ -243,8 +243,8 @@ These requirements are documented but NOT mapped to any phase in this milestone.
 | 1 | Foundation | 3/3 | Complete | 2026-03-01 |
 | 2 | Working Demo | 4/4 | Complete | 2026-03-01 |
 | 3 | Prompt Management + Playground | 3/3 | Complete | 2026-03-01 |
-| 4 | Reliability + Differentiators | 0/3 | Planned | — |
-| 5 | Evaluation + Alerts | 0/3 | Planned | — |
+| 4 | Reliability + Differentiators | 3/3 | Complete | 2026-03-02 |
+| 5 | Evaluation + Alerts | 3/3 | Complete | 2026-03-02 |
 
 ---
 
@@ -271,6 +271,6 @@ These are confirmed decisions from research that constrain all phases. Do not re
 
 *Roadmap version: 1.3*
 *Created: 2026-03-01*
-*Updated: 2026-03-01 (Phase 3 Prompt Management + Playground complete)*
+*Updated: 2026-03-02 (All phases complete — milestone finished)*
 *Milestone: Portfolio Demo*
 *Coverage: 12/12 active requirements mapped, 3 deferred*
