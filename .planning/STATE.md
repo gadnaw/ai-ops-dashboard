@@ -6,28 +6,28 @@
 
 ## Current Position
 
-**Status:** Phase 1 in progress — Plan 01-01 complete
+**Status:** Phase 1 in progress — Plan 01-02 complete
 **Phase:** Phase 1 — Foundation (in progress)
-**Plan:** 01-01 complete, 01-02 next
+**Plan:** 01-02 complete, 01-03 next
 **Task:** —
-**Last activity:** 2026-03-01 — Completed 01-01 Scaffold (4/4 tasks)
+**Last activity:** 2026-03-01 — Completed 01-02 Auth+RBAC (5/5 tasks)
 
 ## Progress
 
 ```
-Phase 1 ██░░░ 1/3 plans complete
+Phase 1 ████░ 2/3 plans complete
 Phase 2 ░░░░░ 0/4 plans complete
 Phase 3 ░░░░░ 0/3 plans complete
 Phase 4 ░░░░░ 0/3 plans complete
 Phase 5 ░░░░░ 0/3 plans complete
-Overall: 1/16 plans complete (6%)
+Overall: 2/16 plans complete (12%)
 ```
 
 ### Milestone Progress
 
 | Phase | Name | Status | Plans | Notes |
 |-------|------|--------|-------|-------|
-| 1 | Foundation | In Progress | 3/3 | Scaffold done, Auth+RBAC + DevOps pending |
+| 1 | Foundation | In Progress | 3/3 | Scaffold done, Auth+RBAC done, DevOps pending |
 | 2 | Working Demo | Planned | 4/4 | Data layer, Model router, Dashboard UI, Config+Seed — 24 tasks |
 | 3 | Prompt Management + Playground | Planned | 3/3 | Prompt service, Prompt UI, Playground — 7 tasks |
 | 4 | Reliability + Differentiators | Planned | 3/3 | Rate limiter, Degradation viz, A/B testing — 8 tasks |
@@ -35,12 +35,12 @@ Overall: 1/16 plans complete (6%)
 
 ### Current Phase Detail
 
-**Phase 1: Foundation** — Plan 01-01 complete.
+**Phase 1: Foundation** — Plans 01-01 and 01-02 complete.
 
 | Plan | Status | Tasks | Last Commit |
 |------|--------|-------|-------------|
 | 01-01 Scaffold | Complete | 4/4 | 97fe70b |
-| 01-02 Auth+RBAC | Ready | 5 | — |
+| 01-02 Auth+RBAC | Complete | 5/5 | 9c74dc7 |
 | 01-03 DevOps | Ready | 4 | — |
 
 ## Accumulated Decisions
@@ -60,12 +60,21 @@ Key architectural decisions locked at roadmap creation. These do NOT need re-eva
 - **Server-first rendering:** `"use client"` only on Recharts wrappers, filter dropdowns, and Realtime feed components — all phases
 - **Prototype mode active:** Demo-ready after Phase 2; Phases 3-5 complete the full feature set
 
-### New Decisions from 01-01
+### Decisions from 01-01
 
 - **Prisma 7 adapter pattern:** Prisma 7 removes `url`/`directUrl` from `schema.prisma`. Use `prisma.config.ts` with `defineConfig({ datasource: { url: DIRECT_URL } })` for migrations. Runtime uses `@prisma/adapter-pg` + `pg.Pool` with `DATABASE_URL` (pooled). ALL downstream plans must use `import { prisma } from '@/lib/db/prisma'` — no other PrismaClient instantiation.
 - **Next.js version:** Installed as Next.js 16.1.6 (latest). Full API compatibility with Next.js 15 maintained.
 - **Zod 4 URL validation:** `z.url()` (standalone) used in env.ts — more ergonomic than `z.string().url()` in Zod 4.
 - **Testing stack:** Vitest 4 + jsdom (NOT vitest-environment-jsdom which doesn't exist). @playwright/test 1.58.2.
+
+### Decisions from 01-02
+
+- **Auth helper import pattern:** All Phase 2+ Server Actions and Route Handlers use `import { requireAuth, requireRole, requireAdmin, requireDeveloper } from '@/lib/auth/guards'`. requireAuth() redirects; requireRole() throws for API Route Handlers.
+- **Supabase SSR cookie pattern:** createServerClient() with getAll/setAll used in both middleware and server client. cookies() called inside request context (not at module level).
+- **Client-side login/signup forms:** Login and signup use Client Components with createSupabaseBrowserClient() for immediate error/loading state. Server Actions (actions.ts) exist as fallback.
+- **Dashboard clean URL:** Dashboard page at src/app/(dashboard)/page.tsx renders at /dashboard. Root page.tsx redirects /→/dashboard.
+- **Nav as Server Component:** Nav is an async Server Component reading session server-side. No client-side context provider needed for session display.
+- **PKCE OAuth callback:** /auth/callback Route Handler exchanges authorization code for session. OAuth redirect URL = `${window.location.origin}/auth/callback`.
 
 ## Blockers
 
@@ -84,7 +93,7 @@ No checkpoint files.
 See: `.planning/PROJECT.md` (updated 2026-03-01)
 
 **Core value:** Ship AI that works in production, not just in notebooks.
-**Current focus:** Phase 1 — Plan 01-02 Auth+RBAC is next
+**Current focus:** Phase 1 — Plan 01-03 DevOps is next
 
 ## Configuration
 
@@ -96,23 +105,23 @@ See: `.planning/PROJECT.md` (updated 2026-03-01)
 
 ## Session Continuity
 
-**Last session:** 2026-03-01 14:45 UTC
-**Stopped at:** Completed 01-01-PLAN.md (4/4 tasks)
-**Resume file:** None — continue with Plan 01-02
+**Last session:** 2026-03-01 07:00 UTC
+**Stopped at:** Completed 01-02-PLAN.md (5/5 tasks)
+**Resume file:** None — continue with Plan 01-03
 
 ## Next Steps
 
-**Recommended:** Execute Plan 01-02 (Auth+RBAC)
-**Command:** `/gsd:execute-phase 1` (will pick up 01-02 next)
+**Recommended:** Execute Plan 01-03 (DevOps — CI/CD pipeline, Dockerfile, env config)
+**Command:** `/gsd:execute-phase 1` (will pick up 01-03 next)
 
-**Key handoff context for Plan 01-02:**
-- PrismaClient singleton: `import { prisma } from '@/lib/db/prisma'`
-- Prisma 7 runtime: @prisma/adapter-pg with pg.Pool (DATABASE_URL pooled)
-- Prisma 7 migrations: `pnpm db:migrate:dev` uses DIRECT_URL from prisma.config.ts
-- Route groups ready: `(auth)` for login/signup, `(dashboard)` for protected pages
-- Testing: `pnpm test:run` runs Vitest (2 tests passing)
+**Key handoff context for Plan 01-03:**
+- Auth helpers ready: `import { requireAuth, requireRole } from '@/lib/auth/guards'`
+- Supabase clients: createSupabaseServerClient() for server, createSupabaseBrowserClient() for client
+- Middleware at src/middleware.ts protects /dashboard/*, /api/v1/*, /settings/*, /prompts/*, /playground/*
+- Pre-existing TS errors in next.config.ts and playwright.config.ts (from Plan 01-01) — may need fixing in 01-03
+- cn() utility at src/lib/utils.ts, Button + Input primitives at src/components/ui/
 
 ---
 
 *Last updated: 2026-03-01*
-*Updated by: /gsd:execute-phase — Plan 01-01 complete*
+*Updated by: /gsd:execute-phase — Plan 01-02 complete*
