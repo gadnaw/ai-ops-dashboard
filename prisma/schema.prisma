@@ -78,9 +78,11 @@ model RequestLog {
   fallbackReason  String?   @map("fallback_reason")
   promptText      String?   @map("prompt_text")   // H5: required per analysis constraints
   responseText    String?   @map("response_text") // H5: required per analysis constraints
-  promptVersionId String?   @map("prompt_version_id") @db.Uuid  // H12: no FK in Phase 2
+  promptVersionId String?   @map("prompt_version_id") @db.Uuid  // H12: FK added in Phase 3
   sessionId       String?   @map("session_id") @db.Uuid  // COMP-01 deferred, column present
   createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  promptVersion   PromptVersion? @relation(fields: [promptVersionId], references: [id])
 
   @@index([createdAt, provider, model], name: "request_logs_provider_model_idx")
   @@index([createdAt, costUsd], name: "request_logs_cost_idx")         // M7: Phase 5 alert queries
@@ -139,3 +141,42 @@ model EndpointConfig {
 
   @@map("endpoint_configs")
 }
+
+// ----- PROMPT MANAGEMENT -----
+model PromptTemplate {
+  id              String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug            String          @unique
+  name            String
+  description     String?
+  createdBy       String?         @map("created_by") @db.Uuid
+  activeVersionId String?         @unique @map("active_version_id") @db.Uuid
+  createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime        @updatedAt @map("updated_at") @db.Timestamptz
+
+  versions        PromptVersion[] @relation("TemplateVersions")
+  activeVersion   PromptVersion?  @relation("ActiveVersion", fields: [activeVersionId], references: [id])
+
+  @@map("prompt_templates")
+}
+
+model PromptVersion {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  templateId   String   @map("template_id") @db.Uuid
+  version      Int
+  content      String   @db.Text
+  systemPrompt String?  @map("system_prompt") @db.Text
+  modelConfig  Json     @default("{}") @map("model_config")
+  variables    Json     @default("[]")
+  createdBy    String?  @map("created_by") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  template     PromptTemplate  @relation("TemplateVersions", fields: [templateId], references: [id], onDelete: Cascade)
+  activeFor    PromptTemplate? @relation("ActiveVersion")
+  requestLogs  RequestLog[]
+
+  @@unique([templateId, version])
+  @@index([templateId, createdAt(sort: Desc)])
+  @@map("prompt_versions")
+}
+
+
