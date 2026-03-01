@@ -6,11 +6,11 @@
 
 ## Current Position
 
-**Status:** Phase 4 in progress — 1/3 plans done
+**Status:** Phase 4 in progress — 2/3 plans done
 **Phase:** Phase 4 — Reliability + Differentiators
-**Plan:** 04-01 complete (Rate Limiter)
+**Plan:** 04-02 complete (Degradation Visualization)
 **Task:** —
-**Last activity:** 2026-03-01 — Completed 04-01 (rate_limit_buckets/events/response_cache tables, check_rate_limit() PL/pgSQL, RateLimiterInterface, PostgresRateLimiter, four-stage degradation chain, /api/v1/chat integration)
+**Last activity:** 2026-03-01 — Completed 04-02 (degradation query layer, REST API, Gantt timeline chart, event list, stage detail panel, /dashboard/degradation page)
 
 ## Progress
 
@@ -18,9 +18,9 @@
 Phase 1 █████ 3/3 plans complete
 Phase 2 █████ 4/4 plans complete
 Phase 3 █████ 3/3 plans complete
-Phase 4 █░░░░ 1/3 plans complete
+Phase 4 ███░░ 2/3 plans complete
 Phase 5 ░░░░░ 0/3 plans complete
-Overall: 11/16 plans complete (69%)
+Overall: 12/16 plans complete (75%)
 ```
 
 ### Milestone Progress
@@ -65,7 +65,7 @@ Overall: 11/16 plans complete (69%)
 | Plan | Status | Tasks | Last Commit |
 |------|--------|-------|-------------|
 | 04-01 Rate Limiter | Complete | 3/3 | 7516885 |
-| 04-02 Degradation Visualization | Planned | — | — |
+| 04-02 Degradation Visualization | Complete | 2/2 | 9a0e260 |
 | 04-03 A/B Testing | Planned | — | — |
 
 ## Accumulated Decisions
@@ -167,6 +167,14 @@ Key architectural decisions locked at roadmap creation. These do NOT need re-eva
 - **exactOptionalPropertyTypes requires conditional spread in setCachedResponse opts:** When calling functions with optional number fields, must use `...(val !== undefined ? { key: val } : {})` not `{ key: val }` (val may be undefined).
 - **Stage 2 fallback uses same API key bucket:** Simplification for demo — production would use per-model buckets. Means if bucket is deeply negative, both Stage 1 and Stage 2 fail, progressing to Stage 3.
 
+### Decisions from 04-02
+
+- **constants.ts for browser-safe shared state:** STAGE_CONFIG and DegradationEvent/DegradationChain interfaces live in `src/lib/degradation/constants.ts` (no prisma imports). Client components import from constants.ts; queries.ts (server-only) imports from constants.ts and re-exports. Prevents webpack from bundling pg/tls into client bundle.
+- **export const revalidate = 0 instead of export const dynamic:** Server Component pages that also use `import dynamic from 'next/dynamic'` MUST use `revalidate = 0` for force-dynamic behavior. Using both `import dynamic` and `export const dynamic` causes a naming conflict/build error.
+- **Per-feature lazy.tsx pattern:** Each feature with Recharts components gets its own `components/lazy.tsx` ("use client" file) that exports `dynamic(..., { ssr: false })` wrappers. The Server Component page imports from lazy.tsx. Never call next/dynamic with ssr:false directly in a Server Component (Pitfall 18).
+- **30-second chain grouping window:** Events within 30s for the same API key are grouped into one DegradationChain. Heuristic for demo — production would use a request_id FK column on rate_limit_events.
+- **Recharts Tooltip formatter types:** Use `(value: unknown, name: unknown)` signature for Tooltip formatter in Recharts. The `name` param is `string | undefined` and overloads are strict. Avoid labelFormatter in strict TypeScript mode.
+
 ## Last Deploy
 
 - Status: DEPLOYED
@@ -208,13 +216,24 @@ See: `.planning/PROJECT.md` (updated 2026-03-01)
 ## Session Continuity
 
 **Last session:** 2026-03-01
-**Stopped at:** Phase 4 Plan 04-01 complete — rate_limit_buckets/events/response_cache tables, check_rate_limit() PL/pgSQL, RateLimiterInterface, PostgresRateLimiter, four-stage degradation chain, /api/v1/chat integration with cache-write
-**Resume file:** None — continue Phase 4
+**Stopped at:** Phase 4 Plan 04-02 complete — degradation query layer, REST API, DegradationTimeline Gantt chart, DegradationEventList, StageDetailPanel, /dashboard/degradation page
+**Resume file:** None — continue Phase 4 with 04-03 A/B Testing
 
 ## Next Steps
 
-**Recommended:** Execute Phase 4 Plan 04-02 (Degradation Visualization)
+**Recommended:** Execute Phase 4 Plan 04-03 (A/B Testing)
 **Command:** `/gsd:execute-phase 4`
+
+**Key additions from 04-02 for 04-03:**
+- Degradation queries: `import { getDegradationEvents, groupIntoChains, getDegradationStats } from '@/lib/degradation/queries'`
+- Degradation constants (browser-safe): `import { STAGE_CONFIG } from '@/lib/degradation/constants'`
+- Types: `import type { DegradationEvent, DegradationChain } from '@/lib/degradation/constants'`
+- REST: `GET /api/v1/degradation?format=chains&window=60` — returns chains, stats, eventCount
+- REST: `GET /api/v1/degradation/[eventId]` — single event with apiKey relation
+- Page: `/dashboard/degradation` — Server Component, revalidate=0
+- Pattern (constants.ts): shared STAGE_CONFIG + interfaces live in constants.ts (no prisma) — client components import from there to avoid tls module error
+- Pattern (lazy.tsx): per-feature lazy.tsx as "use client" wrapper for next/dynamic ssr:false
+- Pattern (revalidate=0): use `export const revalidate = 0` NOT `export const dynamic = 'force-dynamic'` when page also uses `import dynamic from 'next/dynamic'`
 
 **Key additions from 04-01 for 04-02/04-03:**
 - Rate limiter: `import { getRateLimiter } from '@/lib/rate-limiter'`
