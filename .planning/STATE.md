@@ -6,21 +6,21 @@
 
 ## Current Position
 
-**Status:** Phase 3 in progress — 2/3 plans complete
+**Status:** Phase 3 complete — 3/3 plans done
 **Phase:** Phase 3 — Prompt Management + Playground
-**Plan:** 03-02 complete (Prompt UI)
+**Plan:** 03-03 complete (Playground)
 **Task:** —
-**Last activity:** 2026-03-01 — Completed 03-02 (PromptEditor/CodeMirror, DiffViewer, VersionList/useOptimistic, 5 prompt routes, @requests filter)
+**Last activity:** 2026-03-01 — Completed 03-03 (PlaygroundForm/useCompletion, TokenCounter, ModelSelector, PromptVersionPicker, /playground page, nav links)
 
 ## Progress
 
 ```
 Phase 1 █████ 3/3 plans complete
 Phase 2 █████ 4/4 plans complete
-Phase 3 ███░░ 2/3 plans complete
+Phase 3 █████ 3/3 plans complete
 Phase 4 ░░░░░ 0/3 plans complete
 Phase 5 ░░░░░ 0/3 plans complete
-Overall: 9/16 plans complete (56%)
+Overall: 10/16 plans complete (63%)
 ```
 
 ### Milestone Progress
@@ -29,7 +29,7 @@ Overall: 9/16 plans complete (56%)
 |-------|------|--------|-------|-------|
 | 1 | Foundation | Complete | 3/3 | Scaffold, Auth+RBAC, DevOps all done |
 | 2 | Working Demo | Complete | 4/4 | All plans complete — data layer, model router, dashboard UI, config UI + seed |
-| 3 | Prompt Management + Playground | In Progress | 2/3 | Prompt service + UI done; Playground remaining |
+| 3 | Prompt Management + Playground | Complete | 3/3 | Prompt service + UI + Playground all done |
 | 4 | Reliability + Differentiators | Planned | 3/3 | Rate limiter, Degradation viz, A/B testing — 8 tasks |
 | 5 | Evaluation + Alerts | Planned | 3/3 | Eval service, Human review, Alert engine — 9 tasks |
 
@@ -58,7 +58,7 @@ Overall: 9/16 plans complete (56%)
 |------|--------|-------|-------------|
 | 03-01 Prompt Manager Service | Complete | 3/3 | db3c604 |
 | 03-02 Prompt UI | Complete | 2/2 | ca73379 |
-| 03-03 Playground | Pending | 0/3 | — |
+| 03-03 Playground | Complete | 2/2 | ab243cc |
 
 ## Accumulated Decisions
 
@@ -142,6 +142,13 @@ Key architectural decisions locked at roadmap creation. These do NOT need re-eva
 - **createPromptVersion sets version: 0 as placeholder:** PostgreSQL BEFORE INSERT trigger `assign_prompt_version` overwrites with the correct per-template incremented value. Prisma requires a non-null value at the app layer.
 - **Version ID type fix for modelConfig:** Prisma's Json field requires `Prisma.InputJsonValue`, not `Record<string, unknown>`. Use `import type { Prisma }` and cast at call site.
 
+### Decisions from 03-03
+
+- **@ai-sdk/react for useCompletion:** AI SDK 6 does NOT export `useCompletion` from the main `ai` package. Must install `@ai-sdk/react` and import from there. The plan referenced `ai/react` which doesn't exist.
+- **toTextStreamResponse() + streamProtocol: text:** `useCompletion` with `streamProtocol: 'data'` + `toUIMessageStreamResponse()` renders garbled JSON in the response panel. Use `toTextStreamResponse()` on server + `streamProtocol: 'text'` on client for clean streaming. Phase 4 consumers of `/api/v1/chat` must match this.
+- **useMemo for token count:** TokenCounter uses `useMemo` not `useEffect + setState` to count tokens. ESLint `react-hooks/set-state-in-effect` blocks synchronous setState inside useEffect.
+- **Next.js Link for internal nav:** ESLint rule `@next/next/no-html-link-for-pages` requires `<Link>` from `next/link` for all internal routes — `<a href>` is only for external URLs.
+
 ## Last Deploy
 
 - Status: DEPLOYED
@@ -170,7 +177,7 @@ No checkpoint files.
 See: `.planning/PROJECT.md` (updated 2026-03-01)
 
 **Core value:** Ship AI that works in production, not just in notebooks.
-**Current focus:** Phase 3 Prompt Management — Phase 2 complete (all 4 plans done)
+**Current focus:** Phase 4 Reliability + Differentiators — Phase 3 complete (all 3 plans done)
 
 ## Configuration
 
@@ -183,13 +190,13 @@ See: `.planning/PROJECT.md` (updated 2026-03-01)
 ## Session Continuity
 
 **Last session:** 2026-03-01
-**Stopped at:** Phase 3 Plan 03-02 complete — PromptEditor/CodeMirror, DiffViewer, VersionList/useOptimistic, 5 prompt routes, @requests filter
-**Resume file:** None — continue Phase 3
+**Stopped at:** Phase 3 Plan 03-03 complete — PlaygroundForm/useCompletion, TokenCounter, ModelSelector, PromptVersionPicker, /playground page, nav links
+**Resume file:** None — continue Phase 4
 
 ## Next Steps
 
-**Recommended:** Execute Phase 3 Plan 03-03 (Playground)
-**Command:** `/gsd:execute-phase 3` (plan 03-03)
+**Recommended:** Execute Phase 4 (Reliability + Differentiators)
+**Command:** `/gsd:execute-phase 4`
 
 **Key handoff context for Phase 3:**
 - Config UI: `import { updateEndpointConfig } from '@/app/(dashboard)/config/actions'`
@@ -238,5 +245,16 @@ See: `.planning/PROJECT.md` (updated 2026-03-01)
 
 ---
 
+**Key additions from 03-03 for Phase 4:**
+- Playground: `/playground?promptVersionId=UUID` — streaming test environment for prompt versions
+- Playground components: `import { PlaygroundForm } from '@/components/playground/PlaygroundForm'`
+- Token counter: `import { TokenCounter } from '@/components/playground/TokenCounter'`
+- Model selector: `import { ModelSelector } from '@/components/playground/ModelSelector'`
+- Stream format: `/api/v1/chat` now uses `toTextStreamResponse()` — consumers must use `streamProtocol: 'text'`
+- @ai-sdk/react 3.0.107 installed — provides `useCompletion` hook for React streaming
+- Nav: Prompts + Playground links added to `src/components/layout/nav.tsx`
+
+---
+
 *Last updated: 2026-03-01*
-*Updated by: /gsd:execute-phase 3 — Plan 03-02 complete (PromptEditor/CodeMirror, DiffViewer, VersionList/useOptimistic, 5 prompt routes, @requests filter)*
+*Updated by: /gsd:execute-phase 3 — Plan 03-03 complete (PlaygroundForm/useCompletion, TokenCounter, ModelSelector, PromptVersionPicker, /playground page, nav links)*
