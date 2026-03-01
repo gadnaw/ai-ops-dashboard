@@ -6,21 +6,21 @@
 
 ## Current Position
 
-**Status:** Phase 2 in progress — 3/4 plans done
-**Phase:** Phase 2 — Working Demo (in progress)
-**Plan:** 02-03 complete
+**Status:** Phase 2 complete — 4/4 plans done
+**Phase:** Phase 2 — Working Demo (complete)
+**Plan:** 02-04 complete
 **Task:** —
-**Last activity:** 2026-03-01 — Completed 02-03 Dashboard UI (3/3 tasks)
+**Last activity:** 2026-03-01 — Completed 02-04 Config UI + Seed Data (3/3 tasks)
 
 ## Progress
 
 ```
 Phase 1 █████ 3/3 plans complete
-Phase 2 ███░░ 3/4 plans complete
+Phase 2 █████ 4/4 plans complete
 Phase 3 ░░░░░ 0/3 plans complete
 Phase 4 ░░░░░ 0/3 plans complete
 Phase 5 ░░░░░ 0/3 plans complete
-Overall: 6/16 plans complete (38%)
+Overall: 7/16 plans complete (44%)
 ```
 
 ### Milestone Progress
@@ -28,7 +28,7 @@ Overall: 6/16 plans complete (38%)
 | Phase | Name | Status | Plans | Notes |
 |-------|------|--------|-------|-------|
 | 1 | Foundation | Complete | 3/3 | Scaffold, Auth+RBAC, DevOps all done |
-| 2 | Working Demo | In Progress | 2/4 | Data layer + Model router complete; Dashboard UI, Config+Seed remaining |
+| 2 | Working Demo | Complete | 4/4 | All plans complete — data layer, model router, dashboard UI, config UI + seed |
 | 3 | Prompt Management + Playground | Planned | 3/3 | Prompt service, Prompt UI, Playground — 7 tasks |
 | 4 | Reliability + Differentiators | Planned | 3/3 | Rate limiter, Degradation viz, A/B testing — 8 tasks |
 | 5 | Evaluation + Alerts | Planned | 3/3 | Eval service, Human review, Alert engine — 9 tasks |
@@ -50,7 +50,7 @@ Overall: 6/16 plans complete (38%)
 | 02-01 Data Layer | Complete | 3/3 | 5feb694 |
 | 02-02 Model Router | Complete | 3/3 | 75ab9dc |
 | 02-03 Dashboard UI | Complete | 3/3 | 10d4ea9 |
-| 02-04 Config+Seed | Planned | — | — |
+| 02-04 Config+Seed | Complete | 3/3 | afaf45f |
 
 ## Accumulated Decisions
 
@@ -119,6 +119,12 @@ Key architectural decisions locked at roadmap creation. These do NOT need re-eva
 - **Dynamic import ssr:false pattern:** All 4 Recharts chart components dynamically imported with `ssr: false` in slot pages to prevent ResponsiveContainer zero-dimension SSR failure.
 - **Zustand skipHydration:** `persist({ skipHydration: true })` in dashboard-filter store. FilterBar calls `useDashboardFilterStore.persist.rehydrate()` in `useEffect` to avoid SSR/client mismatch.
 
+### Decisions from 02-04
+
+- **Server Action try/catch for requireRole():** In Server Actions called from `"use client"` components, uncaught errors from `requireRole()` propagate as generic failures. Wrap in try/catch and return `{ error: string }` to give the form a displayable error message.
+- **ESLint relaxed rules for prisma/:** Added `"prisma/**"` to the eslint.config.mjs relaxed-rules override (`no-console: off`). Seed scripts need console.log for progress reporting; `--max-warnings=0` caused pre-commit failures without this.
+- **'error' in result for discriminated union narrowing:** Server Actions return `{ success: true } | { error: string }`. Use `'error' in result` (not `result.error`) to correctly narrow TypeScript union and avoid false negatives on empty-string errors.
+
 ## Blockers
 
 No current blockers.
@@ -136,7 +142,7 @@ No checkpoint files.
 See: `.planning/PROJECT.md` (updated 2026-03-01)
 
 **Core value:** Ship AI that works in production, not just in notebooks.
-**Current focus:** Phase 2 Working Demo in progress — 02-02 Model Router complete
+**Current focus:** Phase 3 Prompt Management — Phase 2 complete (all 4 plans done)
 
 ## Configuration
 
@@ -149,23 +155,24 @@ See: `.planning/PROJECT.md` (updated 2026-03-01)
 ## Session Continuity
 
 **Last session:** 2026-03-01
-**Stopped at:** Completed 02-03-PLAN.md (3/3 tasks)
-**Resume file:** None — continue with Phase 2 Plan 02-04
+**Stopped at:** Completed 02-04-PLAN.md (3/3 tasks) — Phase 2 complete
+**Resume file:** None — begin Phase 3
 
 ## Next Steps
 
-**Recommended:** Execute Phase 2 Plan 02-04 (Config + Seed)
-**Command:** `/gsd:execute-phase 2` (plan 02-04)
+**Recommended:** Execute Phase 3 Plan 03-01 (Prompt Management)
+**Command:** `/gsd:execute-phase 3` (plan 03-01)
 
-**Key handoff context for Phase 2 remaining plans:**
-- Database schema: apply migrations manually via Supabase SQL Editor (see 02-01-SUMMARY.md)
-- pg_cron: must be enabled in Supabase Dashboard > Database > Extensions
-- supabase/setup.sql: Phase 2 section must be run after migrations
+**Key handoff context for Phase 3:**
+- Config UI: `import { updateEndpointConfig } from '@/app/(dashboard)/config/actions'`
+- Seed data: run `pnpm db:seed` after DB migrations to populate 10K rows
+- seedBaseData(): `import { seedBaseData } from 'prisma/seed'` — Phase 5 extends this
 - Model router: `import { streamWithFallback, loadEndpointConfig } from '@/lib/model-router/router'`
 - Registry: `import { registry } from '@/lib/model-router/registry'`
 - Logger: `import { logRequest } from '@/lib/logging/request-logger'` — only call from after() callbacks
-- Materialized views: NEVER query request_logs directly in dashboard slots — use hourly_cost_summary, hourly_latency_percentiles, daily_model_breakdown
-- Dashboard is PUBLIC: /dashboard has no requireAuth — middleware updated, (dashboard)/layout.tsx is passthrough
+- Materialized views: NEVER query request_logs directly — use hourly_cost_summary, hourly_latency_percentiles, daily_model_breakdown
+- Dashboard is PUBLIC: /dashboard not in isProtectedRoute — no auth required
+- /config is PROTECTED: requires auth + DEVELOPER role (both middleware + requireRole guard)
 - Dashboard queries: `import { fetchCostSummary, fetchLatencyPercentiles, fetchDailyModelBreakdown, fetchRequestVolume } from '@/lib/dashboard/queries'`
 - Filter store: `import { useDashboardFilterStore } from '@/stores/dashboard-filter'`
 - Chart components: `import { CostTrendChart, LatencyChart, ModelPieChart, RequestVolumeChart } from '@/components/charts'`
@@ -175,11 +182,13 @@ See: `.planning/PROJECT.md` (updated 2026-03-01)
 - maxOutputTokens: AI SDK 6 renamed maxTokens to maxOutputTokens in streamText()
 - Optional fields: use conditional spread `...(val ? { key: val } : {})` not `val: undefined`
 - Lint script: `pnpm lint` = `eslint src/` (not `next lint`)
+- ESLint relaxed rules: prisma/** has no-console off (seed scripts can use console.log)
 - Pre-commit hooks active: ESLint + Prettier run on every commit automatically
 - Auth helpers: `import { requireAuth, requireRole } from '@/lib/auth/guards'`
+- Server Action role guard pattern: wrap requireRole() in try/catch, return { error } not throw
 - Prisma client: `import { prisma } from '@/lib/db/prisma'`
 
 ---
 
 *Last updated: 2026-03-01*
-*Updated by: /gsd:execute-phase — Plan 02-02 complete*
+*Updated by: /gsd:execute-phase — Plan 02-04 complete (Phase 2 complete)*
